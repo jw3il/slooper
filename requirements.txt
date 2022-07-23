@@ -3,3 +3,4 @@ soundfile
 numpy
 flask
 waitress
+PyYAML

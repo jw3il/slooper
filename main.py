@@ -1,4 +1,7 @@
 import json
+import logging
+import yaml
+from yaml import Loader
 
 from flask import Flask, render_template, send_file
 import recording
@@ -6,14 +9,24 @@ import os
 
 app = Flask(__name__)
 
-# automatically start stream
-# recording.stream_start(search_for_device='Spark', latency=0.1)
-recording.stream_start(device=(1, 3), latency=0.1)
+
+@app.before_first_request
+def initialize():
+    logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
+    logging.info("Launching..")
+
+    with open("config.yml", "r") as f:
+        cfg = yaml.load(f, Loader=Loader)
+
+    # automatically start stream
+    recording.stream_start(device=cfg["device"], latency=cfg["latency"])
+
 
 @app.route('/')
 def main():
     # show main page with controls
     return render_template('main.html')
+
 
 @app.route('/settings')
 def settings():

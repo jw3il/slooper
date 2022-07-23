@@ -3,7 +3,7 @@ import io
 import logging
 from enum import Enum
 import time
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 
 import numpy as np
 import sounddevice as sd
@@ -183,30 +183,40 @@ def callback(data_in: np.ndarray, data_out: np.ndarray, frames: int, time, statu
 
     duration = timer() - start
     duration_stats.update(duration)
-    logging.info(str(duration * 1000))
 
 
-def stream_start(device: Optional[Tuple[int, int]]=None, search_for_device: Optional[str]=None, search_timeout=5, latency='high', channels=1):
+def search_device(name: Union[int, str], search_timeout: float):
+    search_start_time = timer()
+    logging.info(f"Trying to find device containing '{name}'")
+    while timer() - search_start_time < search_timeout:
+        try:
+            search_result = sd.query_devices(name)
+            return search_result['name']
+        except ValueError:
+            # could not find device, try again later
+            time.sleep(0.1)
+
+    raise ValueError(f"Could not find device with name containing '{name}'.\n"
+                     f"Available devices:\n {sd.query_devices()}")
+
+
+def stream_start(device: Union[int, str, Tuple[Union[int, str], Union[int, str]]], search_timeout=5, latency='high', channels=1):
     global stream, recordings
     if stream is not None:
         return None
 
-    if device is None and search_for_device is not None:
-        search_start_time = timer()
-        logging.info(f"Trying to find device containing '{search_for_device}'")
-        while device is None and timer() - search_start_time < search_timeout:
-            try:
-                search_result = sd.query_devices(search_for_device)
-                device = (search_result['name'], search_result['name'])
-            except ValueError:
-                # could not find device, try again later
-                time.sleep(0.1)
-        
-        if device is None:
-            raise ValueError(f"Could not find device with name containing '{search_for_device}'.\n"
-                             f"Available devices:\n {sd.query_devices()}")
-
-    assert len(device) == 2, f"Expecting 2 devices but got {len(device)}."
+    # make sure that the specified devices exist or search device by substring
+    if isinstance(device, (list, tuple)):
+        device = (
+            search_device(device[0], search_timeout),
+            search_device(device[1], search_timeout)
+        )
+    else:
+        found_device = search_device(device, search_timeout)
+        device = (
+            found_device,
+            found_device
+        )
 
     logging.info("Using devices")
     logging.info(f"> Input: {device[0]}")
@@ -242,8 +252,7 @@ atexit.register(stream_close)
 
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
-    print(sd.query_devices())
-    stream_start(search_for_device='Spark')#, device=(1, 3))
+    stream_start(device='Spark')
     logging.info("Record")
     recordings["a"].state = State.Record
     sd.sleep(int(1000 * 5))
