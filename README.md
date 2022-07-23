@@ -1,4 +1,4 @@
-# Looper
+# 🔁 Looper
 
 *Looper* is web-based audio recording and playback tool tailored for looping.
 Its main purpose is to add looping functionality to guitar amps with USB audio interfaces.
