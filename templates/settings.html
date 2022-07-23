@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SparkLoop</title>
+    <script src="/static/jquery-3.6.0.js"></script>
+</head>
+<body>
+    <p><b>Available Devices</b></p>
+    <ul>
+    {% for d in devices %}
+        <li>{{ d }}</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
