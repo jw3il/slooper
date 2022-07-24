@@ -1,9 +1,9 @@
 # 🔁 Looper
 
-*Looper* is web-based audio recording and playback tool tailored for looping.
+*Looper* is a web-based audio recording and playback tool tailored for looping.
 Its main purpose is to add looping functionality to guitar amps with USB audio interfaces.
 
-Connect it to your amp with a Raspberry PI, your Laptop or PC and control the looper from any device in your network.
+Connect it to your amp with a Raspberry Pi, your Laptop or PC and control the looper from any device in your network.
 The audio is recorded locally, the recording delay can be adapted according to your device's hardware.
 As looper uses the USB audio interface, nothing stops you from simultaneous playback and recording.
 Compared to microphone-based solutions, all recordings come straight from your amp without any additional noise.
@@ -19,6 +19,7 @@ Compared to microphone-based solutions, all recordings come straight from your a
 - [x] Download recordings
 - [ ] Control volume per recording
 - [ ] Fast loop transition to avoid audio popping
+- [ ] Consistent over multiple devices
 - [ ] Trim recordings
 - [ ] Minimalistic UI
 
