@@ -1,1 +1,2 @@
-waitress-serve --port 5000 "main:app"
+#!/bin/bash
+waitress-serve --port 80 "main:app"
