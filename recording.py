@@ -163,7 +163,7 @@ class StatsBuffer:
         }
 
 
-stream: Optional[sd.Stream] = None
+stream = None
 recordings = collections.defaultdict(lambda: Recording())
 duration_stats = StatsBuffer(capacity=100, dtype=float)
 
