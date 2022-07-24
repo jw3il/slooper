@@ -8,6 +8,8 @@ The audio is recorded locally, the recording delay can be adapted according to y
 As looper uses the USB audio interface, nothing stops you from simultaneous playback and recording.
 Compared to microphone-based solutions, all recordings come straight from your amp without any additional noise.
 
+![](doc/screenshot.png)
+
 ## Features
 
 - [x] Local audio recording
@@ -15,8 +17,10 @@ Compared to microphone-based solutions, all recordings come straight from your a
 - [x] Simultaneous playback of multiple recordings
 - [x] Record during playback
 - [x] Download recordings
-- [ ] Clean and minimalistic UI
-- [ ] Audio trimming
+- [ ] Control volume per recording
+- [ ] Fast loop transition to avoid audio popping
+- [ ] Trim recordings
+- [ ] Minimalistic UI
 
 ## Supported Devices
 
