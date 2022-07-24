@@ -65,6 +65,7 @@
                 <th>Playblack</th>
                 <th>Length [s]</th>
                 <th>Control</th>
+                <th>Download</th>
                 <th>Delete</th>
             </tr>
         </thead>
@@ -134,6 +135,7 @@
             <td style="text-align: center;"><input type="range" min="0" max="1" value="0" step="any" key='${key}'></td>
             <td></td>
             <td><input type='button' name='loopKeyButton' key='${key}'></td>
+            <td><form method="get" action="/download/${key}"><button type="submit">Download</button></form></td>
             <td><input type='button' name='deleteButton' key='${key}' value="Delete">`;
         return $(row);
     }

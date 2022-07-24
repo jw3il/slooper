@@ -1,5 +1,7 @@
 import json
 import logging
+from datetime import datetime
+
 import yaml
 from yaml import Loader
 
@@ -76,7 +78,8 @@ def download(key):
     if key in recording.recordings:
         bytes_io = recording.recordings[key].create_bytes_io()
         bytes_io.seek(0)
-        return send_file(bytes_io, 'audio/flac', as_attachment=True, download_name=f"{key}.flac")
+        time_str = datetime.fromtimestamp(recording.recordings[key].timestamp).strftime("%Y_%m_%d-%H_%M")
+        return send_file(bytes_io, 'audio/flac', as_attachment=True, download_name=f"{time_str}-{key}.flac")
 
     return f"{key} does not exist"
 

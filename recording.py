@@ -104,6 +104,7 @@ class Recording:
         self.frame: int = 0
         self.volume: float = 1.0
         self.name: str = ''
+        self.timestamp = time.time()
 
     def set_frame(self, new_frame):
         if self._data.set_idx(new_frame):
