@@ -3,96 +3,98 @@
 <head>
     <title>Looper</title>
     <link rel="icon" href="/static/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <script src="/static/jquery-3.6.0.js"></script>
     <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css">
+
+    <!-- bootstrap start -->
+    <link rel="stylesheet" href="/static/bootstrap-5.2.0-dist/css/bootstrap.min.css">
+    <!-- bootstrap end -->
+
+    <!-- sweet alert start -->
+    <script src="/static/sweetalert2-dist/sweetalert2.min.js"></script>
+    <link rel="stylesheet" href="static/sweetalert2-dist/sweetalert2.min.css">
+    <!-- sweet alert end-->
     <style>
-        table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
+        html, body {
+            height: 100%;
             width: 100%;
+            border: 0;
+            margin: 0;
+            padding: 0;
         }
-
-        td, th {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-        }
-
-        tr:nth-child(even) {
-            background-color: #eeeeee;
-        }
-
-        /* overlay from https://www.w3schools.com/howto/howto_css_overlay.asp */
-        #recordStop {
-          position: fixed;
-          width: 100%;
-          height: 100%;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0,0,0,0.7);
-          cursor: pointer;
-        }
-
-        #recordStop > div {
-            font-size: 5vw;
-            color: white;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%);
-        }
-
-        .shortcut {
-            color: rgba(0.7, 0.7, 0.7, 1);
+        .table-wrapper {
+            height: 100%;
+            max-height: 100%;
+            overflow: scroll;
+            width: 100%;
+            padding: 0;
         }
     </style>
 </head>
 <body>
-    <h1>🔁 Looper</h1>
-    <button type="button" onclick="poweroff()"><i class="fa fa-power-off" aria-hidden="true"></i> Poweroff</button>
-    <p><b>Stream</b>: <span id="stream"></span></p>
-
-    <p><b>Recordings</b></p>
-    <table id="recordings">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>State</th>
-                <th>Volume</th>
-                <th>Time [s]</th>
-                <th>Playblack</th>
-                <th>Length [s]</th>
-                <th>Control</th>
-                <th>Download</th>
-                <th>Delete</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-    <button type="button" onclick="pauseAll()">Pause all</button>
-
-    <form id="recordForm">
-        <p><b>Add new recording</b> <span class="shortcut">(<i class="fa fa-keyboard-o"></i> space)</span></p>
-        <label for="recordName">[Optional] Name</label> <input id="recordName" type="text" value="">
-        <br>
-        <button type="button" id="record">Record</button>
-        <button type="button" id="recordLoop">Record and Loop</button>
-    </form>
-    <div id="overlay"></div>
-
-    <div id="recordStop" style="display:none;">
-        <div id="recordStopText">Stop Recording</div>
+<div class="container-fluid h-100 w-100 d-flex flex-column">
+<div class="row">
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">🔁 Looper</span>
+            <span id="stream" class="navbar-text"></span>
+            <span><button type="button" onclick="poweroff()" class="btn btn-primary"><i class="fa fa-power-off" aria-hidden="true"></i></button></span>
+            </div>
+    </nav>
+</div>
+<div class="row" style="height:60%;">
+    <div class="table-wrapper">
+        <table id="recordings" class="table table-hover">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Vol</th>
+                    <th scope="col">Time</th>
+                    <th scope="col" style="text-align: center;">Playblack</th>
+                    <th scope="col">Length</th>
+                    <th scope="col">Control</th>
+                    <th scope="col">Download</th>
+                    <th scope="col">Delete</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-    <br>
+</div>
+<div class="row">
+    <button type="button" class="btn btn-light w-100" onclick="pauseAll()">Pause all</button>
+    <hr>
+    <form class="w-100">
+        <div class="row">
+            <div class="col">
+                <input id="recordName" class="form-control" type="text" value="" placeholder="Name (optional)">
+            </div>
+        <div class="col" style="margin-top: 5px;">
+            <div class="form-check form-check-inline" style="text-align: center;">
+                <label class="form-check-label" for="autoLoopCheckbox">Play after recording</label><input class="form-check-input" type="checkbox" value="" id="autoLoopCheckbox">
+            </div>
+        </div>
+        </div>
+    </form>
+</div>
+<div class="row flex-grow-1 w-100" style="margin: 10px 0px 10px 0px;">
+    <button type="button" id="record" class="btn btn-primary btn-lg w-100 h-100"></button>
+</div>
+</div>
 </body>
 <script>
+    var firstLoad = true;
     var lastState = null;
     var lastStateTime = null;
     var dirtyState = false;
     var isUpdating = false;
     var nextKey = null;
+
+    var recordHTML = "Record<br>(<i class=\"fa fa-keyboard-o\"></i> space)"
+    var recordStopHTML = "Stop Recording<br>(<i class=\"fa fa-keyboard-o\"></i> space)"
+    $("#record").html(recordHTML);
 
     var rows = {};
 
@@ -134,9 +136,9 @@
             <td></td>
             <td style="text-align: center;"><input type="range" min="0" max="1" value="0" step="any" key='${key}'></td>
             <td></td>
-            <td><input type='button' name='loopKeyButton' key='${key}'></td>
-            <td><form method="get" action="/download/${key}"><button type="submit">Download</button></form></td>
-            <td><input type='button' name='deleteButton' key='${key}' value="Delete">`;
+            <td><input type='button' class="btn btn-dark btn-sm" name='loopKeyButton' key='${key}'></td>
+            <td><form method="get" action="/download/${key}"><button type="submit" class="btn btn-dark btn-sm"><i class="fa fa-download" aria-hidden="true"></i></button></form></td>
+            <td><button type='button' class="btn btn-dark btn-sm" name='deleteButton' key='${key}'><i class="fa fa-trash" aria-hidden="true"></i></button>`;
         return $(row);
     }
 
@@ -147,12 +149,11 @@
 
         if (lastState.stream.active) {
             $("#stream").html(`
-                sample rate ${lastState.stream.samplerate}, 
-                device (${lastState.stream.device}), 
-                processing time [ms] 
-                    ${(lastState.stream.duration_stats.mean * 1000).toFixed(2)} ± ${(lastState.stream.duration_stats.std * 1000).toFixed(2)} 
-                    (99p: ${(lastState.stream.duration_stats['99p'] * 1000).toFixed(2)},
-                    max: ${(lastState.stream.duration_stats['max'] * 1000).toFixed(2)})
+                ${lastState.stream.samplerate} Hz | 
+                device ${lastState.stream.device} |
+                ${(lastState.stream.duration_stats.mean * 1000).toFixed(2)} ± ${(lastState.stream.duration_stats.std * 1000).toFixed(2)} ms 
+                (99p: ${(lastState.stream.duration_stats['99p'] * 1000).toFixed(2)},
+                max: ${(lastState.stream.duration_stats['max'] * 1000).toFixed(2)})
             `);
         }
         else {
@@ -205,12 +206,14 @@
             $("td:nth-child(2)", row).html(`${recording.state}`);
             $("td:nth-child(3)", row).html(`${recording.volume}`);
             $("td:nth-child(4)", row).html(`${time.toFixed(2)}`);
-            if (recording.state != 'pause') {
+            if (recording.state != 'pause' || firstLoad) {
                 $("td:nth-child(5) > input", row).val(time / length);
             }
             $("td:nth-child(6)", row).html(`${length.toFixed(2)}`);
-            $("td > input[name='loopKeyButton']", row).val(recording.state == 'loop' ? 'Pause' : 'Loop');
+            $("td > input[name='loopKeyButton']", row).val(recording.state == 'loop' ? '⏸' : '▶');
         }
+
+        firstLoad = false;
     }
 
     function setPlaybackTime(key, time) {
@@ -227,9 +230,10 @@
         loopKey(target.attr('key'));
     });
 
-    $('#recordings').on('click', "tbody > tr > td > input[name='deleteButton']", function(e) {
+    $('#recordings').on('click', "tbody > tr > td > button[name='deleteButton']", function(e) {
         e.preventDefault();
         const target = $(e.target);
+        console.log(target);
         deleteKey(target.attr('key'));
     });
 
@@ -273,24 +277,34 @@
     }
 
     function poweroff() {
-        $.get("/poweroff", function(data) {});
+        Swal.fire({
+            title: 'Shutdown looper',
+            text: "Are you sure you want to shut down?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'No, I am not done yet.',
+            cancelButtonText: "Yes, shut down!",
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    $.get("/poweroff", function(data) {});
+            }
+        })
     }
 
     var currentRecordingKey = null;
     var loopAfterRecord = false;
+    var isRecording = false;
 
     $("#record").click(function(){
-        loopAfterRecord = false;
-        recordStart();
-    });
-
-    $("#recordLoop").click(function(){
-        loopAfterRecord = true;
-        recordStart();
-    });
-
-    $("#recordStop").click(function(){
-        recordStop();
+        if (isRecording) {
+            recordStop();
+        }
+        else {
+            loopAfterRecord = ($("#autoLoopCheckbox").is(':checked'));
+            recordStart();
+        }
     });
 
     function recordStart() {
@@ -300,6 +314,7 @@
         const key = nextKey;
         currentRecordingKey = key;
         const name = $('input[id="recordName"]').val();
+        $('input[id="recordName"]').val("");
         // TODO: Error handling...
         $.get("/delete/" + key, function(data) {
             if (name != '') {
@@ -308,8 +323,8 @@
             $.get("/record/" + key, function(data) {
                 // we started recording
                 isRecording = true;
-                $("#recordForm").hide();
-                $("#recordStop").show();
+                $("#record").html(recordStopHTML);
+                $("#record").removeClass("btn-primary").addClass("btn-success");
                 update();
             });
         });
@@ -324,8 +339,8 @@
         $.get(action + key, function(data) {
             // we stopped recording
             isRecording = false;
-            $("#recordForm").show();
-            $("#recordStop").hide();
+            $("#record").html(recordHTML);
+            $("#record").removeClass("btn-success").addClass("btn-primary");
             update();
             currentRecordingKey = null;
         });

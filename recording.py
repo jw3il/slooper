@@ -165,7 +165,7 @@ class StatsBuffer:
 
 stream: Optional[sd.Stream] = None
 recordings = collections.defaultdict(lambda: Recording())
-duration_stats = StatsBuffer(capacity=500, dtype=float)
+duration_stats = StatsBuffer(capacity=100, dtype=float)
 
 
 def callback(data_in: np.ndarray, data_out: np.ndarray, frames: int, time, status: sd.CallbackFlags):
@@ -224,7 +224,6 @@ def stream_start(device: Union[int, str, Tuple[Union[int, str], Union[int, str]]
     logging.info(f"> Output: {device[1]}")
 
     stream = sd.Stream(callback=callback, device=device, latency=latency, channels=channels, dtype='float32')
-
     stream.start()
     logging.info("Started stream")
 
