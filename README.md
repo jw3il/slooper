@@ -58,6 +58,18 @@ All dependencies can then be installed with `pip`:
 
 Congratulations, you are done!
 
+## System Configuration
+
+### Poweroff (Linux only)
+
+Looper has a button to power off your system. This button simpy calls `sudo poweroff` on the server. To make this work
+without user interaction, you can edit `/etc/sudoers` with `visudo` and allow your user `user_name` to poweroff the
+system (and more):
+
+```
+user_name ALL=(ALL) NOPASSWD: /sbin/poweroff, /sbin/reboot, /sbin/shutdown
+```
+
 ## Running Looper
 
 Looper comes with tiny helper scripts to run it in different modes

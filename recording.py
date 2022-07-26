@@ -3,7 +3,8 @@ import io
 import logging
 from enum import Enum
 import time
-from typing import Optional, List, Tuple, Union
+from typing import List, Tuple, Union
+from threading import Lock
 
 import numpy as np
 import sounddevice as sd
@@ -167,23 +168,26 @@ stream = None
 recordings = collections.defaultdict(lambda: Recording())
 duration_stats = StatsBuffer(capacity=100, dtype=float)
 
+callback_lock = Lock()
+
 
 def callback(data_in: np.ndarray, data_out: np.ndarray, frames: int, time, status: sd.CallbackFlags):
+    global recordings, callback_lock
     start = timer()
-    global recordings, stats
 
     if status:
         logging.warning(status)
 
     data_out[:] = 0
-    for r in recordings.values():
-        if r.state == State.Record:
-            r.record(data_in)
-        elif r.state == State.Loop:
-            r.loop(data_out)
+    with callback_lock:
+        for r in recordings.values():
+            if r.state == State.Record:
+                r.record(data_in)
+            elif r.state == State.Loop:
+                r.loop(data_out)
 
-    duration = timer() - start
-    duration_stats.update(duration)
+        duration = timer() - start
+        duration_stats.update(duration)
 
 
 def search_device(name: Union[int, str], search_timeout: float):
@@ -196,6 +200,8 @@ def search_device(name: Union[int, str], search_timeout: float):
         except ValueError:
             # could not find device, try again later
             time.sleep(0.1)
+        except sd.PortAudioError:
+            break
 
     raise ValueError(f"Could not find device with name containing '{name}'.\n"
                      f"Available devices:\n {sd.query_devices()}")
@@ -243,7 +249,8 @@ def get_stream_info_dict():
         'active': False if stream is None else stream.active,
         'samplerate': 0 if stream is None else stream.samplerate,
         'device': -1 if stream is None else stream.device,
-        'duration_stats': duration_stats.get()
+        'duration_stats': duration_stats.get(),
+        'debug': get_devices_list()
     }
 
 
@@ -251,8 +258,8 @@ def get_stream_info_dict():
 atexit.register(stream_close)
 
 if __name__ == '__main__':
-    logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
-    stream_start(device='Spark')
+    logging.basicConfig(format="%(asctime)s %(message)s", level=logging.DEBUG)
+    stream_start(device=(1, 3))
     logging.info("Record")
     recordings["a"].state = State.Record
     sd.sleep(int(1000 * 5))
