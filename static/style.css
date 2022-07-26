@@ -1,0 +1,15 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.table-wrapper {
+    height: 100%;
+    max-height: 100%;
+    overflow: scroll;
+    width: 100%;
+    padding: 0;
+}
