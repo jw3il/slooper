@@ -3,7 +3,7 @@
 #     [1, 2]   -  1 is used for recording and 2 for playback
 #     3        -  3 is used for recording and playback
 #     Spark    -  search for a device that contains "Spark" in its name and use it for recording and playback
-device: [1, 3]
+device: [1, "Lautsprecher"]
 
 # The latency of the audio stream. Higher values lead to more stable streams but decrease the snappyness
 latency: 0.1

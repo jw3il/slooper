@@ -76,12 +76,12 @@ Looper comes with tiny helper scripts to run it in different modes
 
 ### Production Mode
 
-Execute `run_waitress.sh` to run the app in production mode with [waitress](https://docs.pylonsproject.org/projects/waitress/en/latest/).
+Execute `looper.sh -w` to run the app in production mode with [waitress](https://docs.pylonsproject.org/projects/waitress/en/latest/).
 We recommend to use this mode for playing with looper, as the UI latency will usually be much lower than in development mode. 
 
 ###  Development Mode
 
-Execute `run_flask.sh` to run the app in development mode with the built-in flask development server.
+Execute `looper.sh -d` to run the app in development mode with the built-in flask development server.
 Note that this webserver is quite slow, only use this option for development.
 
 ## Contributing
