@@ -89,12 +89,12 @@ PATH=$PATH:/home/$USER/.local/bin
 # run the server
 if [ "${DEBUG}" = true ]; then
     # debug mode with flask
-    FLASK_APP=main
-    FLASK_ENV=development
+    export FLASK_APP=main
+    export FLASK_ENV=development
     flask run --host=$IP --port=$PORT
 else
     # production mode with waitress
-    waitress-serve --listen $IP:$PORT main:app
+    python -O -c "from waitress.runner import run; run()" --listen $IP:$PORT main:app
 fi
 return_code="$?"
 

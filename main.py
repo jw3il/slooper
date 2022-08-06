@@ -1,9 +1,8 @@
+import atexit
 import json
 import logging
 from datetime import datetime
-
-import yaml
-from yaml import Loader
+from viztracer import VizTracer
 
 from flask import Flask, render_template, send_file
 import recording
@@ -16,8 +15,7 @@ def load():
     if recording.stream is not None:
         return True
 
-    with open("config.yml", "r") as f:
-        cfg = yaml.load(f, Loader=Loader)
+    cfg = recording.load_config()
 
     try:
         # start stream
