@@ -38,7 +38,7 @@ class Recording:
 
     def create_bytes_io(self, samplerate):
         bytes_io = io.BytesIO()
-        sf.write(bytes_io, self._data.numpy(), samplerate=samplerate, format='FLAC')
+        sf.write(bytes_io, self._data.numpy(), samplerate=int(samplerate), format='FLAC')
         return bytes_io
 
     def get_info_dict(self):
