@@ -82,19 +82,17 @@ fi
 
 # cd to the directory of this script
 pushd "${SCRIPT_DIR}"
-
-# add local bin path
-PATH=$PATH:/home/$USER/.local/bin
+export PYTHONPATH="${SCRIPT_DIR}"
 
 # run the server
 if [ "${DEBUG}" = true ]; then
     # debug mode with flask
-    export FLASK_APP=main
+    export FLASK_APP=app
     export FLASK_ENV=development
     flask run --host=$IP --port=$PORT
 else
     # production mode with waitress
-    python -O -c "from waitress.runner import run; run()" --listen $IP:$PORT main:app
+    python -O -c "from waitress.runner import run; run()" --listen $IP:$PORT app:app
 fi
 return_code="$?"
 
