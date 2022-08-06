@@ -61,7 +61,7 @@ def status():
 
 @app.route('/delete/<string:key>')
 def delete(key):
-    if stream is None:
+    if stream.stream is None:
         return "No stream."
 
     with stream.lock:
@@ -74,13 +74,13 @@ def delete(key):
 
 @app.route('/download/<string:key>')
 def download(key):
-    if stream is None:
+    if stream.stream is None:
         return "No stream."
 
     if key in stream.recordings:
         # might lag as we block the callback while generating the file..
         with stream.lock:
-            bytes_io = stream.recordings[key].create_bytes_io()
+            bytes_io = stream.recordings[key].create_bytes_io(stream.stream.samplerate)
             timestamp = stream.recordings[key].timestamp
 
         bytes_io.seek(0)
@@ -92,7 +92,7 @@ def download(key):
 
 @app.route('/record/<string:key>')
 def record(key):
-    if stream is None:
+    if stream.stream is None:
         return "No stream."
 
     with stream.lock:
@@ -103,7 +103,7 @@ def record(key):
 
 @app.route('/set-frame/<string:key>/<int:frame>')
 def set_frame(key, frame):
-    if stream is None:
+    if stream.stream is None:
         return "No stream."
 
     with stream.lock:
@@ -123,7 +123,7 @@ def set_name(key, name):
 
 @app.route('/pause/<string:key>')
 def pause(key):
-    if stream is None:
+    if stream.stream is None:
         return "No stream."
 
     with stream.lock:
@@ -143,7 +143,7 @@ def pause_all():
 
 @app.route('/loop/<string:key>')
 def loop(key):
-    if stream is None:
+    if stream.stream is None:
         return "No stream."
 
     with stream.lock:

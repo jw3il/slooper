@@ -36,10 +36,9 @@ class Recording:
             data_out += out * self.volume
             self.frame =  (self.frame + n) % len(self._data)
 
-    def create_bytes_io(self):
-        global stream
+    def create_bytes_io(self, samplerate):
         bytes_io = io.BytesIO()
-        sf.write(bytes_io, self._data.get_numpy(), samplerate=int(stream.samplerate), format='FLAC')
+        sf.write(bytes_io, self._data.numpy(), samplerate=samplerate, format='FLAC')
         return bytes_io
 
     def get_info_dict(self):
