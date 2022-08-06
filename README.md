@@ -56,6 +56,13 @@ All dependencies can then be installed with `pip`:
 (looper) $ pip install -r requirements.txt
 ```
 
+These python packages have additional requirements that may or may not be installed on your system. 
+On a fresh installation of `Raspbian GNU/Linux 11 (bullseye)`, you have to install `libatlas-base-dev` for `numpy` and `libportaudio2` and `libsndfile1-dev` for `sounddevice`:
+
+```
+$ sudo apt install libatlas-base-dev libportaudio2 libsndfile1-dev
+```
+
 Congratulations, you are done!
 
 ## System Configuration
