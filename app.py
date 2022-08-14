@@ -4,6 +4,8 @@ from datetime import datetime
 from webbrowser import get
 
 from flask import Flask, send_file, abort, jsonify
+from flask import request
+from flask_socketio import SocketIO, emit
 import os
 from soundlooper.recording import State
 import soundlooper.stream as stream
@@ -50,26 +52,30 @@ def close():
     return "Close"
 
 
-def get_state(info: str = '', lock_stream=True):
+def get_state_dict(info: str = '', lock_stream=True):
     if lock_stream:
         stream.lock.acquire()
 
-    response = jsonify({
+    state_dict = {
         'stream': stream.get_stream_info_dict(),
         'recordings': dict(map(lambda pair: (pair[0], pair[1].get_info_dict()), stream.recordings.items())),
         'info': info
-    })
+    }
 
     if lock_stream:
         stream.lock.release()
 
-    return response
+    return state_dict
+
+
+def get_state_response(info: str = '', lock_stream=True):
+    return jsonify(get_state_dict(info, lock_stream))
 
 
 @app.route('/state')
 def state():
     load()
-    return get_state()
+    return get_state_response()
 
 
 @contextmanager
@@ -103,7 +109,8 @@ def delete(key):
     with stream_context():
         delete_recording(key)
     
-    return get_state(f'Deleted {key}')
+    request_has_changed_state()
+    return get_state_response(f'Deleted {key}')
 
 
 @app.route('/download/<string:key>')
@@ -121,7 +128,8 @@ def record(key):
     with stream_context():
         get_recording(key, can_create=True).state = State.Record
 
-    return get_state(f'Start Recording at {key}')
+    request_has_changed_state()
+    return get_state_response(f'Start Recording at {key}')
 
 
 @app.route('/set-frame/<string:key>/<int:frame>')
@@ -132,7 +140,8 @@ def set_frame(key, frame):
             abort(400, "Cannot set frame while recording")
         r.set_frame(frame)
 
-    return get_state(f'Set frame of {key} to {frame}')
+    request_has_changed_state()
+    return get_state_response(f'Set frame of {key} to {frame}')
 
 
 @app.route('/set-name/<string:key>/<string:name>')
@@ -140,7 +149,8 @@ def set_name(key, name):
     with stream_context():
         get_recording(key).name = name
 
-    return get_state(f'Set name of {key} to {name}')
+    request_has_changed_state()
+    return get_state_response(f'Set name of {key} to {name}')
 
 
 @app.route('/pause/<string:key>')
@@ -148,7 +158,8 @@ def pause(key):
     with stream_context():
         get_recording(key).state = State.Pause
 
-    return get_state(f'Paused Recording at {key}')
+    request_has_changed_state()
+    return get_state_response(f'Paused Recording at {key}')
 
 
 @app.route('/pause')
@@ -157,7 +168,8 @@ def pause_all():
         for r in stream.recordings.values():
             r.state = State.Pause
     
-    return get_state("Paused all recordings")
+    request_has_changed_state()
+    return get_state_response("Paused all recordings")
 
 
 @app.route('/loop/<string:key>')
@@ -165,4 +177,36 @@ def loop(key):
     with stream_context():
         get_recording(key).state = State.Loop
 
-    return get_state(f'Started looping of {key}')
+    request_has_changed_state()
+    return get_state_response(f'Started looping of {key}')
+
+
+# socket.io to sync state between clients
+socketio = SocketIO(app)
+clients = []
+
+@socketio.on('connect')
+def connect():
+    clients.append(request.sid)
+    logging.info(f"SocketIO: Connect {request.sid} (total {len(clients)})")
+
+@socketio.on('disconnect')
+def disconnect():
+    clients.remove(request.sid)
+    logging.info(f"SocketIO: Disconnect {request.sid} (total {len(clients)})")
+
+
+def broadcast_to_others(event, data, own_sid):
+    for c in clients:
+        if c != own_sid:
+            socketio.emit(event, data, room=c)
+
+
+def request_has_changed_state():
+    """
+    Called when a HTTP request has changed the state. Broadcasts the current state to other clients.
+    """
+    sid = request.args.get('sid', None)
+    if sid is not None and sid != '':
+        state_dict = get_state_dict("Client {sid} has modified the state")
+        broadcast_to_others('update', state_dict, sid)

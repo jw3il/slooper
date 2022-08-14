@@ -13,6 +13,9 @@ var rows = {};
 
 const updateTimeout = 50;
 
+// arguments for all get requests, will be populated by socket.io
+var getArgs = '';
+
 function request_update() {
     // block parallel request update calls
     if (typeof request_update.busy === 'undefined' ) {
@@ -24,7 +27,7 @@ function request_update() {
     }
 
     request_update.busy = true;
-    $.get("/state", function(data) {
+    $.get("/state", getArgs, function(data) {
         update(data);
         request_update.busy = false;
     }).fail(function() {
@@ -220,7 +223,7 @@ function setProgressBarMode(progressBar, isRecording) {
 function setPlaybackTime(key, time) {
     // set frame
     const frame = Math.floor(time * (state.recordings[key].length - 1));
-    $.get("/set-frame/" + key + "/" + frame, function(data) {
+    $.get("/set-frame/" + key + "/" + frame, getArgs, function(data) {
         update(data);
     });
 }
@@ -253,25 +256,25 @@ $('#recordings').on('click', "tbody > tr > td > .progress", function (e) {
 function loopKey(key) {
     const recordingState = state.recordings[key].state;
     if (recordingState == "pause") {
-        $.get("/loop/" + key, function(data) {
+        $.get("/loop/" + key, getArgs, function(data) {
             update(data);
         });
     }
     else if (recordingState == "loop") {
-        $.get("/pause/" + key, function(data) {
+        $.get("/pause/" + key, getArgs, function(data) {
             update(data);
         });
     }
 }
 
 function deleteKey(key) {
-    $.get("/delete/" + key, function(data) {
+    $.get("/delete/" + key, getArgs, function(data) {
         update(data);
     });
 }
 
 function pauseAll() {
-    $.get("/pause", function(data) {
+    $.get("/pause", getArgs, function(data) {
         update(data);
     });
 }
@@ -288,7 +291,7 @@ function poweroff() {
         cancelButtonText: "Yes, shut down!",
         }).then((result) => {
             if (!result.isConfirmed) {
-                $.get("/poweroff", function(data) {});
+                $.get("/poweroff", getArgs, function(data) {});
         }
     })
 }
@@ -320,7 +323,7 @@ function recordStart() {
     const name = $('input[id="recordName"]').val();
     $('input[id="recordName"]').val("");
 
-    $.get("/record/" + key, function(data) {
+    $.get("/record/" + key, getArgs, function(data) {
         // we started recording
         isRecording = true;
         $("#record").html(recordStopHTML);
@@ -338,7 +341,7 @@ function recordStop() {
     }
     const key = currentRecordingKey;
     const action = loopAfterRecord ? "/loop/" : "/pause/";
-    $.get(action + key, function(data) {
+    $.get(action + key, getArgs, function(data) {
         // we stopped recording
         isRecording = false;
         $("#record").html(recordHTML);
@@ -361,12 +364,27 @@ $('body').keyup(function(e){
     }
 });
 
+
+var socket = io();
+// assign id on connect
+socket.on('connect', function() {
+    getArgs = `sid=${socket.id}`;
+});
+
+// update the state when it is modified by others
+socket.on('update', function(data) {
+    update(data);
+});
+
+// request updates to keep in sync with the server
+setInterval(() => {
+    request_update();
+}, 25_000);
+
+// get the state upon launch
+request_update();
+
+// local rendering updates
 setInterval(() => {
     updateRecordingsTable();
 }, updateTimeout);
-
-setInterval(() => {
-    request_update();
-}, 2500);
-
-request_update();
