@@ -50,7 +50,7 @@ def close():
     return "Close"
 
 
-def get_status(info: str = '', lock_stream=True):
+def get_state(info: str = '', lock_stream=True):
     if lock_stream:
         stream.lock.acquire()
 
@@ -66,10 +66,10 @@ def get_status(info: str = '', lock_stream=True):
     return response
 
 
-@app.route('/status')
-def status():
+@app.route('/state')
+def state():
     load()
-    return get_status()
+    return get_state()
 
 
 @contextmanager
@@ -103,7 +103,7 @@ def delete(key):
     with stream_context():
         delete_recording(key)
     
-    return get_status(f'Deleted {key}')
+    return get_state(f'Deleted {key}')
 
 
 @app.route('/download/<string:key>')
@@ -121,7 +121,7 @@ def record(key):
     with stream_context():
         get_recording(key, can_create=True).state = State.Record
 
-    return get_status(f'Start Recording at {key}')
+    return get_state(f'Start Recording at {key}')
 
 
 @app.route('/set-frame/<string:key>/<int:frame>')
@@ -129,7 +129,7 @@ def set_frame(key, frame):
     with stream_context():
         get_recording(key).set_frame(frame)
 
-    return get_status(f'Set frame of {key} to {frame}')
+    return get_state(f'Set frame of {key} to {frame}')
 
 
 @app.route('/set-name/<string:key>/<string:name>')
@@ -137,7 +137,7 @@ def set_name(key, name):
     with stream_context():
         get_recording(key).name = name
 
-    return get_status(f'Set name of {key} to {name}')
+    return get_state(f'Set name of {key} to {name}')
 
 
 @app.route('/pause/<string:key>')
@@ -145,7 +145,7 @@ def pause(key):
     with stream_context():
         get_recording(key).state = State.Pause
 
-    return get_status(f'Paused Recording at {key}')
+    return get_state(f'Paused Recording at {key}')
 
 
 @app.route('/pause')
@@ -154,7 +154,7 @@ def pause_all():
         for r in stream.recordings.values():
             r.state = State.Pause
     
-    return get_status("Paused all recordings")
+    return get_state("Paused all recordings")
 
 
 @app.route('/loop/<string:key>')
@@ -162,4 +162,4 @@ def loop(key):
     with stream_context():
         get_recording(key).state = State.Loop
 
-    return get_status(f'Started looping of {key}')
+    return get_state(f'Started looping of {key}')

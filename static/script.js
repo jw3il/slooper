@@ -22,7 +22,7 @@ function request_update() {
     }
 
     request_update.busy = true;
-    $.get("/status", function(data) {
+    $.get("/state", function(data) {
         update(data);
         request_update.busy = false;
     }).fail(function() {
