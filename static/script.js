@@ -11,37 +11,46 @@ var nextKey = null;
 // HTML dict of all recording rows
 var rows = {};
 
-function update() {
-    // block parallel update calls
-    if (typeof update.busy === 'undefined' ) {
-        update.busy = false;
+function request_update() {
+    // block parallel request update calls
+    if (typeof request_update.busy === 'undefined' ) {
+        request_update.busy = false;
     }
 
-    if (update.busy) {
+    if (request_update.busy) {
         return;
     }
 
-    update.busy = true;
-    dirtyState = true;
-
-    // get status and update DOM
+    request_update.busy = true;
     $.get("/status", function(data) {
-        state = JSON.parse(data);
-        stateTime = new Date();
-        // get new key
-        const keys = Object.keys(state.recordings);
-        if (keys.length > 0) {
-            nextKey = Math.max(...Object.keys(state.recordings).map(Number)) + 1;
-        }
-        else {
-            nextKey = 0;
-        }
-        updateRecordingsTable();
-        dirtyState = false;
-        update.busy = false;
+        update(data);
+        request_update.busy = false;
     }).fail(function() {
-        update.busy = false;
+        request_update.busy = false;
     });
+}
+
+function update(data, time=new Date()) {
+    if (dirtyState) {
+        setTimeout(update, 5, data, time)
+    }
+    // do not override state with old updates
+    if (stateTime >= time) {
+        return;
+    }
+    dirtyState = true;
+    state = data
+    stateTime = time
+    // get new key
+    const keys = Object.keys(state.recordings);
+    if (keys.length > 0) {
+        nextKey = Math.max(...Object.keys(state.recordings).map(Number)) + 1;
+    }
+    else {
+        nextKey = 0;
+    }
+    updateRecordingsTable();
+    dirtyState = false;
 }
 
 function createRow(key, recording) {
@@ -146,6 +155,7 @@ function updateRecordingsTable() {
             lastRecording = null;
         }
 
+        const frameHasUpdated = lastRecording == null || recording.frame != lastRecording.frame;
         const [time, length] = calcRecordingStats(recording);
 
         // update values
@@ -155,7 +165,7 @@ function updateRecordingsTable() {
         updateHTMLifChanged($("td:nth-child(2)", row), `${recording.state}`);
         updateHTMLifChanged($("td:nth-child(3)", row), `${recording.volume}`);
         updateHTMLifChanged($("td:nth-child(4)", row), `${time.toFixed(2)}`);
-        if (recording.state != 'pause' && $('td:nth-child(5) > input:hover').length == 0) {
+        if ((recording.state != 'pause' || frameHasUpdated) && $('td:nth-child(5) > input:hover').length == 0) {
             $("td:nth-child(5) > input", row).val(time / length);
         }
         updateHTMLifChanged($("td:nth-child(6)", row), `${length.toFixed(2)}`);
@@ -171,8 +181,8 @@ function updateRecordingsTable() {
 function setPlaybackTime(key, time) {
     // set frame
     const frame = Math.floor(time * (state.recordings[key].length - 1));
-    $.get("/set-frame/" + key + "/" + frame, function() {
-        update();
+    $.get("/set-frame/" + key + "/" + frame, function(data) {
+        update(data);
     });
 }
 
@@ -194,36 +204,28 @@ $('#recordings').on('click touchend', "tbody > tr > td > input[type='range']", f
 });
 
 function loopKey(key) {
-    if (dirtyState) {
-        return;
-    }
-
     const recordingState = state.recordings[key].state;
     if (recordingState == "pause") {
-        $.get("/loop/" + key, function( data ) {
-            update();
+        $.get("/loop/" + key, function(data) {
+            update(data);
         });
     }
     else if (recordingState == "loop") {
-        $.get("/pause/" + key, function( data ) {
-            update();
+        $.get("/pause/" + key, function(data) {
+            update(data);
         });
     }
 }
 
 function deleteKey(key) {
-    if (dirtyState) {
-        return;
-    }
-
     $.get("/delete/" + key, function(data) {
-        update();
+        update(data);
     });
 }
 
 function pauseAll() {
     $.get("/pause", function(data) {
-        update();
+        update(data);
     });
 }
 
@@ -270,18 +272,16 @@ function recordStart() {
     currentRecordingKey = key;
     const name = $('input[id="recordName"]').val();
     $('input[id="recordName"]').val("");
-    // TODO: Error handling...
-    $.get("/delete/" + key, function(data) {
+
+    $.get("/record/" + key, function(data) {
+        // we started recording
+        isRecording = true;
+        $("#record").html(recordStopHTML);
+        $("#record").removeClass("btn-primary").addClass("btn-success");
+        update(data);
         if (name != '') {
-            $.get("/set-name/" + key + "/" + name, function() {});
+            $.get("/set-name/" + key + "/" + name);
         }
-        $.get("/record/" + key, function(data) {
-            // we started recording
-            isRecording = true;
-            $("#record").html(recordStopHTML);
-            $("#record").removeClass("btn-primary").addClass("btn-success");
-            update();
-        });
     });
 }
 
@@ -296,7 +296,7 @@ function recordStop() {
         isRecording = false;
         $("#record").html(recordHTML);
         $("#record").removeClass("btn-success").addClass("btn-primary");
-        update();
+        update(data);
         currentRecordingKey = null;
     });
 }
@@ -319,7 +319,7 @@ setInterval(() => {
 }, 50);
 
 setInterval(() => {
-    update();
+    request_update();
 }, 2500);
 
-update();
+request_update();

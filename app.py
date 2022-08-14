@@ -1,12 +1,13 @@
-import imp
-import json
+from contextlib import contextmanager
 import logging
 from datetime import datetime
+from webbrowser import get
 
-from flask import Flask, send_file
+from flask import Flask, send_file, abort, jsonify
 import os
 from soundlooper.recording import State
 import soundlooper.stream as stream
+
 
 app = Flask(__name__)
 
@@ -49,104 +50,116 @@ def close():
     return "Close"
 
 
+def get_status(info: str = '', lock_stream=True):
+    if lock_stream:
+        stream.lock.acquire()
+
+    response = jsonify({
+        'stream': stream.get_stream_info_dict(),
+        'recordings': dict(map(lambda pair: (pair[0], pair[1].get_info_dict()), stream.recordings.items())),
+        'info': info
+    })
+
+    if lock_stream:
+        stream.lock.release()
+
+    return response
+
+
 @app.route('/status')
 def status():
     load()
-    with stream.lock:
-        return json.dumps({
-            'stream': stream.get_stream_info_dict(),
-            'recordings': dict(map(lambda pair: (pair[0], pair[1].get_info_dict()), stream.recordings.items()))
-        })
+    return get_status()
+
+
+@contextmanager
+def stream_context():
+    if stream.stream is None:
+        abort(400, "No stream available")
+    stream.lock.acquire()
+    try:
+        yield
+    finally:
+        stream.lock.release()
+
+
+def get_recording(key, can_create=False):
+    if key in stream.recordings:
+        return stream.recordings[key]
+    elif can_create:
+        return stream.recordings[key]
+    else:
+        abort(404, f"Recording with key '{key}' does not exist")
+
+def delete_recording(key):
+    if key in stream.recordings:
+        del stream.recordings[key]
+    else:
+        abort(404, f"Recording with key '{key}' does not exist")
 
 
 @app.route('/delete/<string:key>')
 def delete(key):
-    if stream.stream is None:
-        return "No stream."
-
-    with stream.lock:
-        if key in stream.recordings:
-            del stream.recordings[key]
-            return f'Deleted {key}'
-
-    return f"{key} does not exist"
+    with stream_context():
+        delete_recording(key)
+    
+    return get_status(f'Deleted {key}')
 
 
 @app.route('/download/<string:key>')
 def download(key):
-    if stream.stream is None:
-        return "No stream."
-
-    if key in stream.recordings:
-        # might lag as we block the callback while generating the file..
-        with stream.lock:
-            bytes_io = stream.recordings[key].create_bytes_io(stream.stream.samplerate)
-            timestamp = stream.recordings[key].timestamp
-
+    with stream_context():
+        r = get_recording(key)
+        bytes_io = r.create_bytes_io(stream.stream.samplerate)
         bytes_io.seek(0)
-        time_str = datetime.fromtimestamp(timestamp).strftime("%Y_%m_%d-%H_%M")
+        time_str = datetime.fromtimestamp(r.timestamp).strftime("%Y_%m_%d-%H_%M")
         return send_file(bytes_io, 'audio/flac', as_attachment=True, download_name=f"{time_str}-{key}.flac")
-
-    return f"{key} does not exist"
 
 
 @app.route('/record/<string:key>')
 def record(key):
-    if stream.stream is None:
-        return "No stream."
+    with stream_context():
+        get_recording(key, can_create=True).state = State.Record
 
-    with stream.lock:
-        stream.recordings[key].state = State.Record
-
-    return f'Start Recording at {key}'
+    return get_status(f'Start Recording at {key}')
 
 
 @app.route('/set-frame/<string:key>/<int:frame>')
 def set_frame(key, frame):
-    if stream.stream is None:
-        return "No stream."
+    with stream_context():
+        get_recording(key).set_frame(frame)
 
-    with stream.lock:
-        if key in stream.recordings:
-            stream.recordings[key].set_frame(frame)
-    
-    return f'Set frame of {key} to {frame}'
+    return get_status(f'Set frame of {key} to {frame}')
 
 
 @app.route('/set-name/<string:key>/<string:name>')
 def set_name(key, name):
-    with stream.lock:
-        stream.recordings[key].name = name
+    with stream_context():
+        get_recording(key).name = name
 
-    return f'Set name of {key} to {name}'
+    return get_status(f'Set name of {key} to {name}')
 
 
 @app.route('/pause/<string:key>')
 def pause(key):
-    if stream.stream is None:
-        return "No stream."
+    with stream_context():
+        get_recording(key).state = State.Pause
 
-    with stream.lock:
-        stream.recordings[key].state = State.Pause
-
-    return f'Paused Recording at {key}'
+    return get_status(f'Paused Recording at {key}')
 
 
 @app.route('/pause')
 def pause_all():
-    with stream.lock:
+    with stream_context():
         for r in stream.recordings.values():
             r.state = State.Pause
     
-    return "Pause"
+    return get_status("Paused all recordings")
 
 
 @app.route('/loop/<string:key>')
 def loop(key):
-    if stream.stream is None:
-        return "No stream."
+    with stream_context():
+        get_recording(key).state = State.Loop
 
-    with stream.lock:
-        stream.recordings[key].state = State.Loop
-
-    return f'Started Looping at {key}'
+    return get_status(f'Started looping of {key}')
