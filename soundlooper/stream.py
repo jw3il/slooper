@@ -118,13 +118,18 @@ def stream_close():
 
 def get_stream_info_dict():
     global stream, duration_stats
-    return {
+    
+    info = {
         'active': False if stream is None else stream.active,
         'samplerate': 0 if stream is None else stream.samplerate,
         'device': -1 if stream is None else stream.device,
         'duration_stats': duration_stats.get_stats(),
-        'debug': get_devices_list()
     }
+
+    if stream is None or not stream.active:
+        info['debug'] = get_devices_list()
+
+    return info
 
 
 def load_config():
