@@ -117,10 +117,17 @@ class RingSegmentList(RingAccessVector):
     """
     List of numpy arrays.
     """
-    def __init__(self):
+    def __init__(self, use_segment_index=True):
+        """
+        Initialize the data structure.
+
+        :param use_segment_index: whether set_idx jumps to segment indices instead of the given
+        index. This accelerates playback because arrays do not have to be copied. Defaults to True.
+        """
         self.li: List[np.ndarray] = []
         self.total_len = 0
 
+        self.use_segment_index = use_segment_index
         self.segment_idx: int = 0
         self.elem_idx: int = 0
 
@@ -143,7 +150,10 @@ class RingSegmentList(RingAccessVector):
             if idx <= arr.shape[0] + total_frame:
                 # found it
                 self.segment_idx = i
-                self.elem_idx = idx - total_frame
+                if self.use_segment_index:
+                    self.elem_idx = idx - total_frame
+                else:
+                    self.elem_idx = 0
                 return True
             else:
                 total_frame += arr.shape[0]
@@ -155,12 +165,14 @@ class RingSegmentList(RingAccessVector):
             return None
 
         remaining = n
+        collected = 0
         blocks = None
         while remaining > 0:
-            available = self.li[self.segment_idx].shape[0] - self.elem_idx
+            li_elem = self.li[self.segment_idx]
+            available = li_elem.shape[0] - self.elem_idx
             if remaining <= available:
                 # collect the remaining number of elements
-                block = self.li[self.segment_idx][self.elem_idx:self.elem_idx + remaining]
+                block = li_elem[self.elem_idx:self.elem_idx + remaining]
 
                 if remaining == available:
                     # move to next segment
@@ -174,24 +186,27 @@ class RingSegmentList(RingAccessVector):
                     return block
                 else:
                     # otherwise, we have to merge multiple blocks later
-                    blocks.append(block)
+                    blocks[collected:collected + block.shape[0]] = block
 
                 remaining = 0
             else:
                 # collect everything from this segment and continue with the next one
-                block = self.li[self.segment_idx][self.elem_idx:self.elem_idx + available]
+                block = li_elem[self.elem_idx:self.elem_idx + available]
 
                 if blocks is None:
-                    blocks = [block]
+                    blocks = np.empty((n, *block.shape[1:]))
+                    blocks[collected:collected + block.shape[0]] = block
                 else:
-                    blocks.append(block)
+                    blocks[collected:collected + block.shape[0]] = block
                 
                 self.segment_idx = (self.segment_idx + 1) % len(self.li)
                 self.elem_idx = 0
 
                 remaining -= available
-
-        return np.reshape(blocks, (n, -1))
+            
+            collected += available
+        
+        return blocks
 
     def clear(self):
         self.li = []
