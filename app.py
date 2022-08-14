@@ -127,7 +127,10 @@ def record(key):
 @app.route('/set-frame/<string:key>/<int:frame>')
 def set_frame(key, frame):
     with stream_context():
-        get_recording(key).set_frame(frame)
+        r = get_recording(key)
+        if r.state == State.Record:
+            abort(400, "Cannot set frame while recording")
+        r.set_frame(frame)
 
     return get_state(f'Set frame of {key} to {frame}')
 

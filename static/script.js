@@ -11,6 +11,8 @@ var nextKey = null;
 // HTML dict of all recording rows
 var rows = {};
 
+const updateTimeout = 50;
+
 function request_update() {
     // block parallel request update calls
     if (typeof request_update.busy === 'undefined' ) {
@@ -56,13 +58,18 @@ function update(data, time=new Date()) {
 function createRow(key, recording) {
     const [time, length] = calcRecordingStats(recording);
     var row = document.createElement("tr");
+    const progress = `
+    <div class="progress" key='${key}'>
+        <div class="progress-bar" role="progressbar" aria-valuenow="${time / length}" aria-valuemin="0" aria-valuemax="1" style="width: ${(time / length) * 100}%;"></div>
+    </div>
+    `
     row.key = key;
     row.innerHTML = `
         <td></td>
         <td></td>
         <td></td> 
         <td>${time.toFixed(2)}</td>
-        <td style="text-align: center;"><input type="range" min="0" max="1" value="${time / length}" step="any" key='${key}'></td>
+        <td style="text-align: center;">${progress}</td>
         <td>${length.toFixed(2)}</td>
         <td><button type='button' class="btn btn-dark btn-sm" name='loopKeyButton' key='${key}'></button></td>
         <td><form method="get" action="/download/${key}"><button type="submit" class="btn btn-dark btn-sm"><i class="fa fa-download" aria-hidden="true"></i></button></form></td>
@@ -155,7 +162,7 @@ function updateRecordingsTable() {
             lastRecording = null;
         }
 
-        const frameHasUpdated = lastRecording == null || recording.frame != lastRecording.frame;
+        const frameHasUpdated = lastRecording == null || recording.frame != lastRecording.frame || recording.state != lastRecording.state;
         const [time, length] = calcRecordingStats(recording);
 
         // update values
@@ -165,8 +172,18 @@ function updateRecordingsTable() {
         updateHTMLifChanged($("td:nth-child(2)", row), `${recording.state}`);
         updateHTMLifChanged($("td:nth-child(3)", row), `${recording.volume}`);
         updateHTMLifChanged($("td:nth-child(4)", row), `${time.toFixed(2)}`);
-        if ((recording.state != 'pause' || frameHasUpdated) && $('td:nth-child(5) > input:hover').length == 0) {
-            $("td:nth-child(5) > input", row).val(time / length);
+        var progressBar = $("td:nth-child(5) > .progress > .progress-bar", row);
+        const newProgressBarVal = time / length;
+        if (recording.state == 'pause' && frameHasUpdated) {
+            setProgressBarMode(progressBar, false);
+            setProgressBarValue(progressBar, newProgressBarVal, true);
+        }
+        else if (recording.state == 'loop') {
+            setProgressBarMode(progressBar, false);
+            setProgressBarValue(progressBar, newProgressBarVal, newProgressBarVal >= progressBar.attr('aria-valuenow'));
+        }
+        else if (recording.state == 'record') {
+            setProgressBarMode(progressBar, true);
         }
         updateHTMLifChanged($("td:nth-child(6)", row), `${length.toFixed(2)}`);
         if (lastRecording == null || lastRecording.state != recording.state) {
@@ -176,6 +193,28 @@ function updateRecordingsTable() {
     }
 
     renderedState = state;
+}
+
+function setProgressBarValue(progressBar, value, smooth=True) {
+    if (smooth) {
+        progressBar.css('transition', '');
+        progressBar.css('transition-duration', `${updateTimeout}ms`);
+    }
+    else {
+        progressBar.css('transition', 'none');
+    }
+    progressBar.css('width', `${value * 100}%`);
+    progressBar.attr('aria-valuenow', value);
+}
+
+function setProgressBarMode(progressBar, isRecording) {
+    if (isRecording) {
+        progressBar.addClass('progress-bar-striped bg-success progress-bar-animated');
+        setProgressBarValue(progressBar, 1, false);
+    }
+    else {
+        progressBar.removeClass('progress-bar-striped bg-success progress-bar-animated');
+    }
 }
 
 function setPlaybackTime(key, time) {
@@ -201,6 +240,14 @@ $('#recordings').on('click', "tbody > tr > td > button[name='deleteButton']", fu
 $('#recordings').on('click touchend', "tbody > tr > td > input[type='range']", function(e) {
     e.preventDefault();
     setPlaybackTime($(e.target).attr('key'), $(e.target).val());
+});
+
+$('#recordings').on('click', "tbody > tr > td > .progress", function (e) {
+    const progressBarDiv = $(e.target).closest('.progress');
+    var x = e.pageX - progressBarDiv.offset().left,
+        clickedValue = x / progressBarDiv.width();
+
+    setPlaybackTime(progressBarDiv.attr('key'), clickedValue);
 });
 
 function loopKey(key) {
@@ -316,7 +363,7 @@ $('body').keyup(function(e){
 
 setInterval(() => {
     updateRecordingsTable();
-}, 50);
+}, updateTimeout);
 
 setInterval(() => {
     request_update();
