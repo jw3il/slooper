@@ -1,13 +1,9 @@
 #!/bin/bash
 
-# allow overriding default settings
-if [ -z "${HOST}" ]; then
-    HOST=0.0.0.0
-fi
-
-if [ -z "${PORT}" ]; then
-    PORT=8080
-fi
+# load environment variables
+set -a
+source .env
+set +a
 
 USAGE="\
 Looper: Web-based looping interface
@@ -82,7 +78,6 @@ fi
 
 # cd to the directory of this script
 cd "${SCRIPT_DIR}"
-export PYTHONPATH="${SCRIPT_DIR}"
 
 # set server env variables and run server
 if [ "${DEVELOPMENT}" = true ]; then
