@@ -42,8 +42,7 @@ def load():
     cfg = stream.load_config()
 
     try:
-        # start stream
-        stream.stream_start(device=cfg["device"], latency=cfg["latency"], search_timeout=0.1)
+        stream.stream_start(device=cfg["device"], latency=cfg["latency"])
         return True
     except ValueError as e:
         logging.error(e)
@@ -209,7 +208,6 @@ def connect():
 
 @socketio.on('disconnect')
 def disconnect():
-    print(type(request))
     socketio_session_ids.remove(request.sid)
     logging.info(f"SocketIO: Disconnect {request.sid} (total {len(socketio_session_ids)})")
 

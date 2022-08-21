@@ -3,7 +3,8 @@ import logging
 from threading import Lock
 import collections
 import time
-from typing import Tuple, Union
+from tkinter.messagebox import NO
+from typing import Dict, Optional, Tuple, Union
 import numpy as np
 import sounddevice as sd
 
@@ -60,49 +61,48 @@ def get_devices_list():
     return str(sd.query_devices()).split("\n")
 
 
-def search_device(name: Union[int, str], search_timeout: float):
-    search_start_time = timer()
-    logging.info(f"Trying to find device containing '{name}'")
-    while timer() - search_start_time < search_timeout:
-        try:
-            search_result = sd.query_devices(name)
-            return search_result['name']
-        except ValueError:
-            # could not find device, try again later
-            time.sleep(0.1)
-        except sd.PortAudioError:
-            break
-
-    raise ValueError(f"Could not find device with name containing '{name}'.\n"
-                     f"Available devices:\n {sd.query_devices()}")
+def restart_sounddevice():
+    sd._terminate()
+    sd._initialize()
 
 
-def stream_start(device: Union[int, str, Tuple[Union[int, str], Union[int, str]]], search_timeout=5, latency='high', channels=1):
+def search_device(name: Union[int, str], kind: Optional[str] = None):
+    logging.info(f"Trying to find device containing '{name}' (kind {kind})")
+    try:        
+        search_result = sd.query_devices(name, kind)
+        return search_result['name']
+    except:
+        raise ValueError(f"Could not find device with name containing '{name}'.\n"
+                        f"Available devices:\n {sd.query_devices()}")
+
+
+def stream_start(device: Union[int, str, Tuple[Union[int, str], Union[int, str]]], latency='high', channels=1):
     global stream, recordings
     if stream is not None:
         return None
 
-    # make sure that the specified devices exist or search device by substring
+    # restart sounddevice to reload available devices
+    restart_sounddevice()
+
     if isinstance(device, (list, tuple)):
-        device = (
-            search_device(device[0], search_timeout),
-            search_device(device[1], search_timeout)
+        stream_device = (
+            search_device(device[0], kind='input'),
+            search_device(device[1], kind='output')
         )
     else:
-        found_device = search_device(device, search_timeout)
-        device = (
-            found_device,
-            found_device
+        stream_device = (
+            search_device(device, kind='input'),
+            search_device(device, kind='output')
         )
-
+    
     logging.info("Using devices")
-    logging.info(f"> Input: {device[0]}")
-    logging.info(f"> Output: {device[1]}")
+    logging.info(f"> Input: {stream_device[0]}")
+    logging.info(f"> Output: {stream_device[1]}")
 
     if __debug__:
         logging.warning("Debug mode is enabled (__debug__).")
 
-    stream = sd.Stream(callback=callback, device=device, latency=latency, channels=channels, dtype='float32')
+    stream = sd.Stream(callback=callback, device=stream_device, latency=latency, channels=channels, dtype='float32')
     stream.start()
     logging.info("Started stream")
 
