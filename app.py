@@ -1,24 +1,43 @@
+import argparse
 from contextlib import contextmanager
 import logging
 from datetime import datetime
-from webbrowser import get
+import logging.config
 
 from flask import Flask, send_file, abort, jsonify
 from flask import request
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 import os
 from soundlooper.recording import State
 import soundlooper.stream as stream
 
 
+# setup logging
+logging.config.dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(module)s %(levelname)s > %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
+
 app = Flask(__name__)
+socketio = SocketIO(app, logger=logging.getLogger(), engineio_logger=True)
+socketio_session_ids = []
 
 
 def load():
     if stream.stream is not None:
         return True
 
-    logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
     logging.info("Launching..")
     cfg = stream.load_config()
 
@@ -96,6 +115,7 @@ def get_recording(key, can_create=False):
         return stream.recordings[key]
     else:
         abort(404, f"Recording with key '{key}' does not exist")
+
 
 def delete_recording(key):
     if key in stream.recordings:
@@ -181,32 +201,42 @@ def loop(key):
     return get_state_response(f'Started looping of {key}')
 
 
-# socket.io to sync state between clients
-socketio = SocketIO(app)
-clients = []
-
 @socketio.on('connect')
 def connect():
-    clients.append(request.sid)
-    logging.info(f"SocketIO: Connect {request.sid} (total {len(clients)})")
+    socketio_session_ids.append(request.sid)
+    logging.info(f"SocketIO: Connect {request.sid} (total {len(socketio_session_ids)})")
+
 
 @socketio.on('disconnect')
 def disconnect():
-    clients.remove(request.sid)
-    logging.info(f"SocketIO: Disconnect {request.sid} (total {len(clients)})")
+    print(type(request))
+    socketio_session_ids.remove(request.sid)
+    logging.info(f"SocketIO: Disconnect {request.sid} (total {len(socketio_session_ids)})")
 
 
 def broadcast_to_others(event, data, own_sid):
-    for c in clients:
+    for c in socketio_session_ids:
         if c != own_sid:
             socketio.emit(event, data, room=c)
 
 
 def request_has_changed_state():
     """
-    Called when a HTTP request has changed the state. Broadcasts the current state to other clients.
+    Called when a HTTP request has changed the state. Broadcasts the current state to other socketio_session_ids.
     """
     sid = request.args.get('sid', None)
     if sid is not None and sid != '':
         state_dict = get_state_dict("Client {sid} has modified the state")
         broadcast_to_others('update', state_dict, sid)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Looper server')
+    parser.add_argument('--host', type=str, default="localhost", help="The host to listen on")
+    parser.add_argument('--port', type=int, default=5000, help="The port to listen on")
+    args = parser.parse_args()
+
+    load()
+
+    logging.warning(f"Launching looper on http://{args.host}:{args.port}")
+    socketio.run(app, host=args.host, port=args.port)

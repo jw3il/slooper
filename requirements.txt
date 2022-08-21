@@ -1,7 +1,9 @@
 sounddevice
 soundfile
 numpy
-flask
-waitress
 PyYAML
 viztracer
+flask
+flask-socketio
+gevent
+gevent-websocket

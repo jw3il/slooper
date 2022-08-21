@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # allow overriding default settings
-if [ -z "${IP}" ]; then
-    IP=0.0.0.0
+if [ -z "${HOST}" ]; then
+    HOST=0.0.0.0
 fi
 
 if [ -z "${PORT}" ]; then
@@ -15,8 +15,8 @@ Usage: $(basename $0) [-h|-w|-d|-i|-a|-z|-u]
 
 General Options:
 -h    Print this help message
--w    Start server in production mode (waitress)
--d    Start server in debug mode (flask debug mode)
+-p    Start server in production mode (default)
+-d    Start server in development mode
 
 Service Options (require sudo & systemd):
 -i    Install this script as a service (starts at boot)
@@ -36,20 +36,20 @@ Description=Looper Web Server
 WantedBy=multi-user.target
 
 [Service]
-ExecStart=/bin/bash ${REAL_PATH} -w
+ExecStart=/bin/bash ${REAL_PATH} -p
 Type=simple
 User=${USER}
 Restart=on-failure"
 
-while getopts ":hwdialzu" option; do
+while getopts ":hpdialzu" option; do
    case $option in
       h)
          echo "$USAGE"
          exit 0;;
-      w)
-         DEBUG=false;;
+      p)
+         DEVELOPMENT=false;;
       d)
-         DEBUG=true;;
+         DEVELOPMENT=true;;
       i)
          echo "Creating looper service.."
          echo "${SERVICE}" > "${SCRIPT_DIR}/looper.service"
@@ -75,27 +75,24 @@ while getopts ":hwdialzu" option; do
    esac
 done
 
-if [ -z "${DEBUG}" ]; then
+if [ -z "${DEVELOPMENT}" ]; then
    echo "${USAGE}"
    exit 0
 fi
 
 # cd to the directory of this script
-pushd "${SCRIPT_DIR}"
+cd "${SCRIPT_DIR}"
 export PYTHONPATH="${SCRIPT_DIR}"
 
-# run the server
-if [ "${DEBUG}" = true ]; then
-    # debug mode with flask
-    export FLASK_APP=app
-    export FLASK_ENV=development
-    flask run --host=$IP --port=$PORT
+# set server env variables and run server
+if [ "${DEVELOPMENT}" = true ]; then
+   export FLASK_ENV=development
+   python app.py --host=$HOST --port=$PORT
 else
-    # production mode with waitress
-    python -O -c "from waitress.runner import run; run()" --listen $IP:$PORT app:app
+   export FLASK_ENV=production
+   python -O app.py --host=$HOST --port=$PORT
 fi
-return_code="$?"
 
-# switch back directory and exit
-popd
-exit ${return_code}
+# return exit status of server
+exit_status="$?"
+exit ${exit_status}
