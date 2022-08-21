@@ -2,9 +2,7 @@ import atexit
 import logging
 from threading import Lock
 import collections
-import time
-from tkinter.messagebox import NO
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 import numpy as np
 import sounddevice as sd
 
