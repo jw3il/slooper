@@ -1,8 +1,11 @@
 #!/bin/bash
 
+REAL_PATH=$(realpath "$0")
+SCRIPT_DIR="$(dirname ${REAL_PATH})"
+
 # load environment variables
 set -a
-source .env
+source "${SCRIPT_DIR}/.env"
 set +a
 
 USAGE="\
@@ -21,12 +24,9 @@ Service Options (require sudo & systemd):
 -z    Stops the looper service
 -u    Uninstall the looper service"
 
-REAL_PATH=$(realpath "$0")
-SCRIPT_DIR="$(dirname ${REAL_PATH})"
-
 SERVICE="\
 [Unit]
-Description=Looper Web Server
+Description=Looper Web Server Service
 
 [Install]
 WantedBy=multi-user.target
@@ -48,8 +48,9 @@ while getopts ":hpdialzu" option; do
          DEVELOPMENT=true;;
       i)
          echo "Creating looper service.."
-         echo "${SERVICE}" > "${SCRIPT_DIR}/looper.service"
-         (set -x; sudo systemctl enable "${SCRIPT_DIR}/looper.service")
+         mkdir -p "${SCRIPT_DIR}/service"
+         echo "${SERVICE}" > "${SCRIPT_DIR}/service/looper.service"
+         (set -x; sudo systemctl enable "${SCRIPT_DIR}/service/looper.service")
          exit 0;;
       a)
          (set -x; sudo systemctl start looper.service)
