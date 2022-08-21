@@ -232,9 +232,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Looper server')
     parser.add_argument('--host', type=str, default="localhost", help="The host to listen on")
     parser.add_argument('--port', type=int, default=5000, help="The port to listen on")
+    parser.add_argument('--debug', action='store_true', help="Enable debug mode")
     args = parser.parse_args()
 
     load()
 
     logging.warning(f"Launching looper on http://{args.host}:{args.port}")
-    socketio.run(app, host=args.host, port=args.port)
+    socketio.run(app, host=args.host, port=args.port, debug=args.debug)

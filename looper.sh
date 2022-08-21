@@ -82,10 +82,8 @@ cd "${SCRIPT_DIR}"
 
 # set server env variables and run server
 if [ "${DEVELOPMENT}" = true ]; then
-   export FLASK_ENV=development
-   python app.py --host=$HOST --port=$PORT
+   python app.py --host=$HOST --port=$PORT --debug
 else
-   export FLASK_ENV=production
    python -O app.py --host=$HOST --port=$PORT
 fi
 
