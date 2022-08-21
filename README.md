@@ -83,7 +83,7 @@ Looper comes with tiny helper scripts to run it in different modes
 
 ### Production Mode
 
-Execute `looper.sh -w` to run the app in production mode with [waitress](https://docs.pylonsproject.org/projects/waitress/en/latest/).
+Execute `looper.sh -p` to run the app in production mode with [gevent](http://www.gevent.org/).
 We recommend to use this mode for playing with looper, as the UI latency will usually be much lower than in development mode. 
 
 ###  Development Mode
