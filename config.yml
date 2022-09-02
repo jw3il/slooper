@@ -14,9 +14,9 @@ reset-usb-devices: [ffff:ffff, 10d6:1319]
 
 # maximum number of times looper tries to find the device upon load
 # (should be > 1 if you reset the usb devices as they need some time to initialize)
-max-device-search-tries: 4
+max-device-search-tries: 3
 # time to sleep between individual searches
-device-search-sleep: 0.5
+device-search-sleep: 0.2
 
 # The latency of the audio stream. Higher values lead to more stable streams but decrease the snappiness
 latency: 0.1

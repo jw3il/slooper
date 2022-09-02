@@ -37,7 +37,7 @@ def load():
     for id in cfg[RESET_USB_DEVICES_KEY]:
         reset_usb(id)
 
-    for _ in count(max(1, int(cfg["max-device-search-tries"]))):
+    for _ in range(max(1, int(cfg["max-device-search-tries"]))):
         try:
             stream.stream_start(device=cfg["device"], latency=cfg["latency"])
             return True
