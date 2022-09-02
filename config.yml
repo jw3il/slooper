@@ -4,7 +4,19 @@
 #     3        -  3 is used for recording and playback
 #     Spark    -  search for a device that contains "Spark" in its name and use it for recording and playback
 #     Null     -  use default devices
-device: Null
+device: Spark
+
+# (linux only) reset the usb devices with the given ids when trying to open the stream
+# some devices don't work correctly when they are turned on before the looper starts.
+# This is an alternative to replugging the device.
+# Examples: [], [ffff:fff, 10d6:1319]
+reset-usb-devices: [ffff:ffff, 10d6:1319]
+
+# maximum number of times looper tries to find the device upon load
+# (should be > 1 if you reset the usb devices as they need some time to initialize)
+max-device-search-tries: 4
+# time to sleep between individual searches
+device-search-sleep: 0.5
 
 # The latency of the audio stream. Higher values lead to more stable streams but decrease the snappiness
 latency: 0.1

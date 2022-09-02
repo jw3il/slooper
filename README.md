@@ -67,14 +67,17 @@ Congratulations, you are done!
 
 ## System Configuration
 
-### Poweroff (Linux only)
+### Poweroff and usbreset (Linux only)
 
-Looper has a button to power off your system. This button simpy calls `sudo poweroff` on the server. To make this work
-without user interaction, you can edit `/etc/sudoers` with `visudo` and allow your user `user_name` to poweroff the
-system (and more):
+Looper includes some system functionality that requires root permissions:
+
+* It has a button to power off your system. This button simply calls `sudo poweroff` on the server. 
+* It can reset usb devices before searching for them. This helps finding usb devices that require replugging to be detected. This requires you to install `usbutils` on the target machine, e.g. `sudo apt-get install usbutils `. Looper then calls `sudo usbreset $ID` for all device ids provided in the `config.yml` file. You can view your device ids with `lsusb`, they consist of two 16-bit hex values and look like `abcd:abcd`.
+
+To make this work, you can edit `/etc/sudoers` with `visudo` and allow your user `user_name` to execute the commands without user interaction.
 
 ```
-user_name ALL=(ALL) NOPASSWD: /sbin/poweroff, /sbin/reboot, /sbin/shutdown
+user_name ALL=(ALL) NOPASSWD: /sbin/poweroff, /usr/bin/usbreset
 ```
 
 ## Running Looper

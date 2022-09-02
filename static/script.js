@@ -11,7 +11,7 @@ var nextKey = null;
 // HTML dict of all recording rows
 var rows = {};
 
-const updateTimeout = 50;
+const tableUpdateTimeout = 50;
 
 // arguments for all get requests, will be populated by socket.io
 var getArgs = '';
@@ -201,7 +201,7 @@ function updateRecordingsTable() {
 function setProgressBarValue(progressBar, value, smooth=True) {
     if (smooth) {
         progressBar.css('transition', '');
-        progressBar.css('transition-duration', `${updateTimeout}ms`);
+        progressBar.css('transition-duration', `${tableUpdateTimeout}ms`);
     }
     else {
         progressBar.css('transition', 'none');
@@ -363,23 +363,30 @@ $('body').keyup(function(e){
         }
     }
 });
+ 
+if (typeof io !== "undefined") {
+    // add websocket functionality and update
+    // the state on remote changes
+    var socket = io();
 
+    // assign id on connect
+    socket.on('connect', function() {
+        getArgs = `sid=${socket.id}`;
+    });
 
-var socket = io();
-// assign id on connect
-socket.on('connect', function() {
-    getArgs = `sid=${socket.id}`;
-});
-
-// update the state when it is modified by others
-socket.on('update', function(data) {
-    update(data);
-});
+    // update the state when it is modified by others
+    socket.on('update', function(data) {
+        update(data);
+    });
+}
 
 // request updates to keep in sync with the server
+// clients without websockets request updates more often as that 
+// is their only way to sync with other clients
+const updateRequestTimeout = (typeof io !== "undefined") ? 30_000 : 2_500;
 setInterval(() => {
     request_update();
-}, 25_000);
+}, updateRequestTimeout);
 
 // get the state upon launch
 request_update();
@@ -387,4 +394,4 @@ request_update();
 // local rendering updates
 setInterval(() => {
     updateRecordingsTable();
-}, updateTimeout);
+}, tableUpdateTimeout);

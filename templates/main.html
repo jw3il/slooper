@@ -16,7 +16,10 @@
     <link rel="stylesheet" href="/static/sweetalert2-dist/sweetalert2.min.css">
     <link rel="stylesheet" href="/static/sweetalert2-dist/sweetalert2.min.css">
 
+    {% if websocket %}
+    <!-- Websocket enabled -->
     <script src="/static/socket.io-4.5.0-dist/socket.io.min.js"></script>
+    {% endif %}
 </head>
 <body>
     <div class="container-fluid h-100 w-100 d-flex flex-column">
