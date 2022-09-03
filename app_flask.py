@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from itertools import count
 import logging
 from datetime import datetime
-from time import sleep
 
 from flask import Flask, send_file, abort, jsonify, render_template
 import os
@@ -14,6 +13,7 @@ from soundlooper.recording import State
 import soundlooper.stream as stream
 import string
 from sys import platform
+from threading import Lock
 
 
 app = Flask(__name__)
@@ -24,31 +24,45 @@ Called when a HTTP request has changed the state.
 e_changed_state = lambda: ()
 websocket_support = False
 
+load_lock = Lock()
+
+
+def try_stream_start(cfg):
+    try:
+        stream.stream_start(device=cfg["device"], latency=cfg["latency"])
+        return True
+    except ValueError as e:
+        logging.error(e)
+        return False
+
+
+def reset_usb(cfg):
+    RESET_USB_DEVICES_KEY='reset-usb-devices'
+    assert isinstance(cfg[RESET_USB_DEVICES_KEY], list), f"Error: '{RESET_USB_DEVICES_KEY}' has to be a list!"
+    for id in cfg[RESET_USB_DEVICES_KEY]:
+        reset_usb_device(id)
+
 
 def load():
     if stream.stream is not None:
         return True
 
-    logging.info("Launching..")
-    cfg = stream.load_config()
+    # only one thread should try loading
+    with load_lock:
+        logging.info("Loading..")
+        cfg = stream.load_config()
 
-    RESET_USB_DEVICES_KEY='reset-usb-devices'
-    assert isinstance(cfg[RESET_USB_DEVICES_KEY], list), f"Error: '{RESET_USB_DEVICES_KEY}' has to be a list!"
-    for id in cfg[RESET_USB_DEVICES_KEY]:
-        reset_usb(id)
-
-    for _ in range(max(1, int(cfg["max-device-search-tries"]))):
-        try:
-            stream.stream_start(device=cfg["device"], latency=cfg["latency"])
+        # try to start the stream
+        if try_stream_start(cfg):
             return True
-        except ValueError as e:
-            logging.error(e)
-            sleep(cfg["device-search-sleep"])
-            
+
+        # reset usb devices if loading failed
+        reset_usb(cfg)
+    
     return False
 
 
-def reset_usb(id: str):
+def reset_usb_device(id: str):
     """
     Resets the usb device with the given id string.
 

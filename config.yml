@@ -6,17 +6,11 @@
 #     Null     -  use default devices
 device: Spark
 
-# (linux only) reset the usb devices with the given ids when trying to open the stream
-# some devices don't work correctly when they are turned on before the looper starts.
-# This is an alternative to replugging the device.
+# (linux only) reset the usb devices with the given ids when opening the stream fails
+# (e.g. because devices could not been found). Unfortunately, this does not work in all cases,
+# sometimes replugging is still necessary.
 # Examples: [], [ffff:fff, 10d6:1319]
 reset-usb-devices: [ffff:ffff, 10d6:1319]
-
-# maximum number of times looper tries to find the device upon load
-# (should be > 1 if you reset the usb devices as they need some time to initialize)
-max-device-search-tries: 3
-# time to sleep between individual searches
-device-search-sleep: 0.2
 
 # The latency of the audio stream. Higher values lead to more stable streams but decrease the snappiness
 latency: 0.1
