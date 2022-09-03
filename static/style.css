@@ -9,7 +9,7 @@ html, body {
 .table-wrapper {
     height: 100%;
     max-height: 100%;
-    overflow: scroll;
+    overflow-y: scroll;
     width: 100%;
-    padding: 0;
+    padding: 0 !important;
 }

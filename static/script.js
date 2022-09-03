@@ -62,21 +62,18 @@ function createRow(key, recording) {
     const [time, length] = calcRecordingStats(recording);
     var row = document.createElement("tr");
     const progress = `
-    <div class="progress" key='${key}'>
+    <div class="progress" key='${key}' style="height: 2.5em;">
         <div class="progress-bar" role="progressbar" aria-valuenow="${time / length}" aria-valuemin="0" aria-valuemax="1" style="width: ${(time / length) * 100}%;"></div>
     </div>
     `
     row.key = key;
     row.innerHTML = `
-        <td></td>
-        <td></td>
-        <td></td> 
-        <td>${time.toFixed(2)}</td>
+        <td style="text-align: center;"></td>
+        <td style="text-align: center;"><button type='button' class="btn btn-dark btn-sm" name='loopKeyButton' key='${key}'></button></td>
         <td style="text-align: center;">${progress}</td>
-        <td>${length.toFixed(2)}</td>
-        <td><button type='button' class="btn btn-dark btn-sm" name='loopKeyButton' key='${key}'></button></td>
-        <td><form method="get" action="/download/${key}"><button type="submit" class="btn btn-dark btn-sm"><i class="fa fa-download" aria-hidden="true"></i></button></form></td>
-        <td><button type='button' class="btn btn-dark btn-sm" name='deleteButton' key='${key}'><i class="fa fa-trash" aria-hidden="true"></i></button>`;
+        <td style="text-align: center;"></td>
+        <td style="text-align: center;"><form method="get" action="/download/${key}"><button type="submit" class="btn btn-dark btn-sm"><i class="fa fa-download" aria-hidden="true"></i></button></form></td>
+        <td style="text-align: center;"><button type='button' class="btn btn-dark btn-sm" name='deleteButton' key='${key}'><i class="fa fa-trash" aria-hidden="true"></i></button>`;
     return $(row);
 }
 
@@ -172,10 +169,25 @@ function updateRecordingsTable() {
         var row = rows[key];
         const id = key + (recording.name == '' ? '' : ':' + recording.name);
         updateHTMLifChanged($("td:nth-child(1)", row), `${id}`);
-        updateHTMLifChanged($("td:nth-child(2)", row), `${recording.state}`);
-        updateHTMLifChanged($("td:nth-child(3)", row), `${recording.volume}`);
-        updateHTMLifChanged($("td:nth-child(4)", row), `${time.toFixed(2)}`);
-        var progressBar = $("td:nth-child(5) > .progress > .progress-bar", row);
+        if (lastRecording == null || lastRecording.state != recording.state) {
+            var buttonHTML;
+            switch (recording.state) {
+                case 'loop':
+                    buttonHTML = '<i class="fa fa-pause" aria-hidden="true"></i>';
+                    break;
+                case 'pause':
+                    buttonHTML = '<i class="fa fa-play" aria-hidden="true"></i>';
+                    break;
+                case 'record':
+                    buttonHTML = '<i class="fa fa-microphone" aria-hidden="true"></i>';
+                    break;
+                default:
+                    buttonHTML = '?'
+            }
+            updateHTMLifChanged($("td > button[name='loopKeyButton']", row), buttonHTML);
+        }
+        updateHTMLifChanged($("td:nth-child(4)", row), `${length.toFixed(2)}s`);
+        var progressBar = $("td:nth-child(3) > .progress > .progress-bar", row);
         const newProgressBarVal = time / length;
         if (recording.state == 'pause' && frameHasUpdated) {
             setProgressBarMode(progressBar, false);
@@ -187,11 +199,6 @@ function updateRecordingsTable() {
         }
         else if (recording.state == 'record') {
             setProgressBarMode(progressBar, true);
-        }
-        updateHTMLifChanged($("td:nth-child(6)", row), `${length.toFixed(2)}`);
-        if (lastRecording == null || lastRecording.state != recording.state) {
-            const buttonHTML = recording.state == 'loop' ? '<i class="fa fa-pause" aria-hidden="true"></i>' : '<i class="fa fa-play" aria-hidden="true"></i>'
-            updateHTMLifChanged($("td > button[name='loopKeyButton']", row), buttonHTML);
         }
     }
 
@@ -320,8 +327,13 @@ function recordStart() {
     }
     const key = nextKey;
     currentRecordingKey = key;
-    const name = $('input[id="recordName"]').val();
-    $('input[id="recordName"]').val("");
+    var name = $('input[id="recordName"]').val();
+    if (typeof name !== "undefined"){
+        $('input[id="recordName"]').val("");
+    }
+    else {
+        name = '';
+    }
 
     $.get("/record/" + key, getArgs, function(data) {
         // we started recording

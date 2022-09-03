@@ -33,7 +33,7 @@
                             <i class="fa fa-power-off" aria-hidden="true"></i>
                         </button>
                     </span>
-                    </div>
+                </div>
             </nav>
         </div>
         <div class="row" style="height:60%;">
@@ -41,15 +41,12 @@
                 <table id="recordings" class="table table-hover">
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">State</th>
-                            <th scope="col">Vol</th>
-                            <th scope="col">Time</th>
-                            <th scope="col" style="text-align: center;">Playblack</th>
-                            <th scope="col">Length</th>
-                            <th scope="col">Control</th>
-                            <th scope="col">Download</th>
-                            <th scope="col">Delete</th>
+                            <th scope="col" style="text-align: center; width: fit-content;">#</th>
+                            <th scope="col" style="text-align: center; width: fit-content;"></th>
+                            <th scope="col" style="text-align: center; width: 100%;">Playblack</th>
+                            <th scope="col" style="text-align: center; width: 100%;">Duration</th>
+                            <th scope="col" style="text-align: center; width: fit-content;">Download</th>
+                            <th scope="col" style="text-align: center; width: fit-content;">Delete</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -61,15 +58,15 @@
             <hr>
             <form class="w-100">
                 <div class="row">
-                    <div class="col">
+                    <!-- <div class="col">
                         <input id="recordName" class="form-control" type="text" value="" placeholder="Name (optional)">
+                    </div> -->
+                    <div class="col" style="margin-top: 5px;">
+                        <div class="form-check form-check-inline" style="text-align: center;">
+                            <label class="form-check-label" for="autoLoopCheckbox">Play after recording</label>
+                            <input class="form-check-input" type="checkbox" value="" id="autoLoopCheckbox" checked="true">
+                        </div>
                     </div>
-                <div class="col" style="margin-top: 5px;">
-                    <div class="form-check form-check-inline" style="text-align: center;">
-                        <label class="form-check-label" for="autoLoopCheckbox">Play after recording</label>
-                        <input class="form-check-input" type="checkbox" value="" id="autoLoopCheckbox" checked="true">
-                    </div>
-                </div>
                 </div>
             </form>
         </div>
