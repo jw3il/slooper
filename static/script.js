@@ -49,11 +49,20 @@ function update(data, time=new Date()) {
     // get new key
     const keys = Object.keys(state.recordings);
     if (keys.length > 0) {
-        nextKey = Math.max(...Object.keys(state.recordings).map(Number)) + 1;
+        nextKey = Math.max(...keys.map(Number)) + 1;
     }
     else {
         nextKey = 0;
     }
+
+    // update record button if new state says that we stopped recording
+    if (currentRecordingKey != null && keys.includes(currentRecordingKey.toString())) {
+        const stoppedRecording = state.recordings[currentRecordingKey.toString()].state != "record";
+        if (stoppedRecording) {
+            updateIsRecording();
+        }
+    }
+
     updateRecordingsTable();
     dirtyState = false;
 }
@@ -272,6 +281,12 @@ function loopKey(key) {
             update(data);
         });
     }
+    else if (recordingState == "record") {
+        // allow to stop running recordings
+        $.get("/pause/" + key, getArgs, function(data) {
+            update(data);
+        });
+    }
 }
 
 function deleteKey(key) {
@@ -305,10 +320,9 @@ function poweroff() {
 
 var currentRecordingKey = null;
 var loopAfterRecord = false;
-var isRecording = false;
 
 $("#record").click(function(){
-    if (isRecording) {
+    if (currentRecordingKey != null) {
         recordStop();
     }
     else {
@@ -326,7 +340,10 @@ function recordStart() {
         return;
     }
     const key = nextKey;
+
+    // already set recording key to block further button presses
     currentRecordingKey = key;
+
     var name = $('input[id="recordName"]').val();
     if (typeof name !== "undefined"){
         $('input[id="recordName"]').val("");
@@ -337,14 +354,28 @@ function recordStart() {
 
     $.get("/record/" + key, getArgs, function(data) {
         // we started recording
-        isRecording = true;
-        $("#record").html(recordStopHTML);
-        $("#record").removeClass("btn-primary").addClass("btn-success");
+        updateIsRecording(key);
         update(data);
         if (name != '') {
             $.get("/set-name/" + key + "/" + name);
         }
+    }).fail(function() {
+        // recording failed, reset key
+        updateIsRecording();
     });
+}
+
+function updateIsRecording(newRecordingKey = null) {
+    isRecording = newRecordingKey == null;
+    currentRecordingKey = newRecordingKey;
+    if (isRecording) {
+        $("#record").html(recordHTML);
+        $("#record").removeClass("btn-success").addClass("btn-primary");
+    }
+    else {
+        $("#record").html(recordStopHTML);
+        $("#record").removeClass("btn-primary").addClass("btn-success");
+    }
 }
 
 function recordStop() {
@@ -355,11 +386,8 @@ function recordStop() {
     const action = loopAfterRecord ? "/loop/" : "/pause/";
     $.get(action + key, getArgs, function(data) {
         // we stopped recording
-        isRecording = false;
-        $("#record").html(recordHTML);
-        $("#record").removeClass("btn-success").addClass("btn-primary");
+        updateIsRecording();
         update(data);
-        currentRecordingKey = null;
     });
 }
 
