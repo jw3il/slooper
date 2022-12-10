@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 import logging
 from typing import List, Optional
@@ -10,6 +9,7 @@ class RingAccessVector(ABC):
     """
     Dynamic numpy vector of variable size with tail append and circular read access to elements.
     """
+
     @abstractmethod
     def set_idx(self, idx: int) -> bool:
         """
@@ -19,7 +19,7 @@ class RingAccessVector(ABC):
         :return: whether the index has been updated correctly
         """
         ...
-    
+
     @abstractmethod
     def append(self, x: np.ndarray):
         """
@@ -62,6 +62,7 @@ class RingGrowingArray(RingAccessVector):
     """
     Numpy array that grows when adding elements would exceed its capacity.
     """
+
     def __init__(self, dtype):
         self.segment_size = 100_000
         self.capacity = self.segment_size
@@ -71,9 +72,11 @@ class RingGrowingArray(RingAccessVector):
 
     def set_idx(self, idx):
         if idx < 0 or idx >= self.size:
-            logging.warning(f"Could not set idx to {idx} in data of length {self.size}.")
+            logging.warning(
+                f"Could not set idx to {idx} in data of length {self.size}."
+            )
             return False
-        
+
         self.idx = idx
         return True
 
@@ -82,14 +85,14 @@ class RingGrowingArray(RingAccessVector):
         if self.size + num_el >= self.capacity:
             self.capacity += self.segment_size
             new_data = np.empty((self.capacity, *self.data.shape[1:]))
-            new_data[:self.size] = self.data[:self.size]
+            new_data[: self.size] = self.data[: self.size]
             self.data = new_data
 
-        self.data[self.size:self.size + num_el] = x
+        self.data[self.size : self.size + num_el] = x
         self.size += num_el
 
     def numpy(self):
-        return self.data[:self.size]
+        return self.data[: self.size]
 
     def take(self, n):
         if self.size == 0:
@@ -107,7 +110,7 @@ class RingGrowingArray(RingAccessVector):
         else:
             # slow case: get with wrap around
             data_slice = slice(curr_idx, next_idx)
-            return self.data[:self.size].take(data_slice, mode='wrap')
+            return self.data[: self.size].take(data_slice, mode="wrap")
 
     def __len__(self):
         return self.size
@@ -117,6 +120,7 @@ class RingSegmentList(RingAccessVector):
     """
     List of numpy arrays.
     """
+
     def __init__(self, use_segment_index=True):
         """
         Initialize the data structure.
@@ -141,7 +145,9 @@ class RingSegmentList(RingAccessVector):
 
     def set_idx(self, idx):
         if idx < 0 or idx >= self.total_len:
-            logging.warning(f"Could not set idx to {idx} in data of length {self.total_len}.")
+            logging.warning(
+                f"Could not set idx to {idx} in data of length {self.total_len}."
+            )
             return False
 
         # find the segment & relative index this frame belongs to
@@ -172,7 +178,7 @@ class RingSegmentList(RingAccessVector):
             available = li_elem.shape[0] - self.elem_idx
             if remaining <= available:
                 # collect the remaining number of elements
-                block = li_elem[self.elem_idx:self.elem_idx + remaining]
+                block = li_elem[self.elem_idx : self.elem_idx + remaining]
 
                 if remaining == available:
                     # move to next segment
@@ -186,26 +192,26 @@ class RingSegmentList(RingAccessVector):
                     return block
                 else:
                     # otherwise, we have to merge multiple blocks later
-                    blocks[collected:collected + block.shape[0]] = block
+                    blocks[collected : collected + block.shape[0]] = block
 
                 remaining = 0
             else:
                 # collect everything from this segment and continue with the next one
-                block = li_elem[self.elem_idx:self.elem_idx + available]
+                block = li_elem[self.elem_idx : self.elem_idx + available]
 
                 if blocks is None:
                     blocks = np.empty((n, *block.shape[1:]))
-                    blocks[collected:collected + block.shape[0]] = block
+                    blocks[collected : collected + block.shape[0]] = block
                 else:
-                    blocks[collected:collected + block.shape[0]] = block
-                
+                    blocks[collected : collected + block.shape[0]] = block
+
                 self.segment_idx = (self.segment_idx + 1) % len(self.li)
                 self.elem_idx = 0
 
                 remaining -= available
-            
+
             collected += available
-        
+
         return blocks
 
     def clear(self):

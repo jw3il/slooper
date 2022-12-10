@@ -12,16 +12,18 @@ socketio = SocketIO(app_flask.app, logger=logging.getLogger(), engineio_logger=T
 socketio_session_ids = []
 
 
-@socketio.on('connect')
+@socketio.on("connect")
 def connect():
     socketio_session_ids.append(request.sid)
     logging.info(f"SocketIO: Connect {request.sid} (total {len(socketio_session_ids)})")
 
 
-@socketio.on('disconnect')
+@socketio.on("disconnect")
 def disconnect():
     socketio_session_ids.remove(request.sid)
-    logging.info(f"SocketIO: Disconnect {request.sid} (total {len(socketio_session_ids)})")
+    logging.info(
+        f"SocketIO: Disconnect {request.sid} (total {len(socketio_session_ids)})"
+    )
 
 
 def broadcast_to_others(event, data, own_sid):
@@ -34,10 +36,10 @@ def socketio_change_handler():
     """
     Broadcasts the current state to other socketio_session_ids.
     """
-    sid = request.args.get('sid', None)
-    if sid is not None and sid != '':
+    sid = request.args.get("sid", None)
+    if sid is not None and sid != "":
         state_dict = app_flask.get_state_dict("Client {sid} has modified the state")
-        broadcast_to_others('update', state_dict, sid)
+        broadcast_to_others("update", state_dict, sid)
 
 
 # update state changed event handler

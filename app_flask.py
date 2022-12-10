@@ -3,7 +3,6 @@ Main flask webapp.
 """
 
 from contextlib import contextmanager
-from itertools import count
 import logging
 from datetime import datetime
 
@@ -17,14 +16,15 @@ from threading import Lock
 
 
 app = Flask(__name__)
-
-"""
-Called when a HTTP request has changed the state. 
-"""
-e_changed_state = lambda: ()
 websocket_support = False
-
 load_lock = Lock()
+
+
+def e_changed_state():
+    """
+    Called when a HTTP request has changed the state, to be reassigned.
+    """
+    pass
 
 
 def try_stream_start(cfg):
@@ -37,8 +37,10 @@ def try_stream_start(cfg):
 
 
 def reset_usb(cfg):
-    RESET_USB_DEVICES_KEY='reset-usb-devices'
-    assert isinstance(cfg[RESET_USB_DEVICES_KEY], list), f"Error: '{RESET_USB_DEVICES_KEY}' has to be a list!"
+    RESET_USB_DEVICES_KEY = "reset-usb-devices"
+    assert isinstance(
+        cfg[RESET_USB_DEVICES_KEY], list
+    ), f"Error: '{RESET_USB_DEVICES_KEY}' has to be a list!"
     for id in cfg[RESET_USB_DEVICES_KEY]:
         reset_usb_device(id)
 
@@ -58,7 +60,7 @@ def load():
 
         # reset usb devices if loading failed
         reset_usb(cfg)
-    
+
     return False
 
 
@@ -80,7 +82,7 @@ def reset_usb_device(id: str):
         logging.error(f"Invalid usb id '{id}'")
 
 
-@app.route('/poweroff')
+@app.route("/poweroff")
 def poweroff():
     if platform == "linux" or platform == "linux2":
         os.system("sudo poweroff")
@@ -90,15 +92,15 @@ def poweroff():
         return f"Poweroff not implemented on platform {platform}"
 
 
-@app.route('/')
+@app.route("/")
 def main():
     # make sure stream is loaded / try to load stream
     load()
     # show main page with controls
-    return render_template('main.html', websocket=websocket_support)
+    return render_template("main.html", websocket=websocket_support)
 
 
-@app.route('/close')
+@app.route("/close")
 def close():
     with stream.lock:
         stream.stream_close()
@@ -106,14 +108,19 @@ def close():
     return "Close"
 
 
-def get_state_dict(info: str = '', lock_stream=True):
+def get_state_dict(info: str = "", lock_stream=True):
     if lock_stream:
         stream.lock.acquire()
 
     state_dict = {
-        'stream': stream.get_stream_info_dict(),
-        'recordings': dict(map(lambda pair: (pair[0], pair[1].get_info_dict()), stream.recordings.items())),
-        'info': info
+        "stream": stream.get_stream_info_dict(),
+        "recordings": dict(
+            map(
+                lambda pair: (pair[0], pair[1].get_info_dict()),
+                stream.recordings.items(),
+            )
+        ),
+        "info": info,
     }
 
     if lock_stream:
@@ -122,11 +129,11 @@ def get_state_dict(info: str = '', lock_stream=True):
     return state_dict
 
 
-def get_state_response(info: str = '', lock_stream=True):
+def get_state_response(info: str = "", lock_stream=True):
     return jsonify(get_state_dict(info, lock_stream))
 
 
-@app.route('/state')
+@app.route("/state")
 def state():
     load()
     return get_state_response()
@@ -159,35 +166,40 @@ def delete_recording(key):
         abort(404, f"Recording with key '{key}' does not exist")
 
 
-@app.route('/delete/<string:key>')
+@app.route("/delete/<string:key>")
 def delete(key):
     with stream_context():
         delete_recording(key)
-    
+
     e_changed_state()
-    return get_state_response(f'Deleted {key}')
+    return get_state_response(f"Deleted {key}")
 
 
-@app.route('/download/<string:key>')
+@app.route("/download/<string:key>")
 def download(key):
     with stream_context():
         r = get_recording(key)
         bytes_io = r.create_bytes_io(stream.stream.samplerate)
         bytes_io.seek(0)
         time_str = datetime.fromtimestamp(r.timestamp).strftime("%Y_%m_%d-%H_%M")
-        return send_file(bytes_io, 'audio/flac', as_attachment=True, download_name=f"{time_str}-{key}.flac")
+        return send_file(
+            bytes_io,
+            "audio/flac",
+            as_attachment=True,
+            download_name=f"{time_str}-{key}.flac",
+        )
 
 
-@app.route('/record/<string:key>')
+@app.route("/record/<string:key>")
 def record(key):
     with stream_context():
         get_recording(key, can_create=True).state = State.Record
 
     e_changed_state()
-    return get_state_response(f'Start Recording at {key}')
+    return get_state_response(f"Start Recording at {key}")
 
 
-@app.route('/set-frame/<string:key>/<int:frame>')
+@app.route("/set-frame/<string:key>/<int:frame>")
 def set_frame(key, frame):
     with stream_context():
         r = get_recording(key)
@@ -196,41 +208,41 @@ def set_frame(key, frame):
         r.set_frame(frame)
 
     e_changed_state()
-    return get_state_response(f'Set frame of {key} to {frame}')
+    return get_state_response(f"Set frame of {key} to {frame}")
 
 
-@app.route('/set-name/<string:key>/<string:name>')
+@app.route("/set-name/<string:key>/<string:name>")
 def set_name(key, name):
     with stream_context():
         get_recording(key).name = name
 
     e_changed_state()
-    return get_state_response(f'Set name of {key} to {name}')
+    return get_state_response(f"Set name of {key} to {name}")
 
 
-@app.route('/pause/<string:key>')
+@app.route("/pause/<string:key>")
 def pause(key):
     with stream_context():
         get_recording(key).state = State.Pause
 
     e_changed_state()
-    return get_state_response(f'Paused Recording at {key}')
+    return get_state_response(f"Paused Recording at {key}")
 
 
-@app.route('/pause')
+@app.route("/pause")
 def pause_all():
     with stream_context():
         for r in stream.recordings.values():
             r.state = State.Pause
-    
+
     e_changed_state()
     return get_state_response("Paused all recordings")
 
 
-@app.route('/loop/<string:key>')
+@app.route("/loop/<string:key>")
 def loop(key):
     with stream_context():
         get_recording(key).state = State.Loop
 
     e_changed_state()
-    return get_state_response(f'Started looping of {key}')
+    return get_state_response(f"Started looping of {key}")

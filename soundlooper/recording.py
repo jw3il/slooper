@@ -19,7 +19,7 @@ class Recording:
         self.state: State = State.Pause
         self.frame: int = 0
         self.volume: float = 1.0
-        self.name: str = ''
+        self.name: str = ""
         self.timestamp = time.time()
 
     def set_frame(self, new_frame):
@@ -34,18 +34,20 @@ class Recording:
         out = self._data.take(n)
         if out is not None:
             data_out += out * self.volume
-            self.frame =  (self.frame + n) % len(self._data)
+            self.frame = (self.frame + n) % len(self._data)
 
     def create_bytes_io(self, samplerate):
         bytes_io = io.BytesIO()
-        sf.write(bytes_io, self._data.numpy(), samplerate=int(samplerate), format='FLAC')
+        sf.write(
+            bytes_io, self._data.numpy(), samplerate=int(samplerate), format="FLAC"
+        )
         return bytes_io
 
     def get_info_dict(self):
         return {
-            'name': self.name,
-            'state': self.state.value,
-            'volume': self.volume,
-            'frame': self.frame,
-            'length': len(self._data)
+            "name": self.name,
+            "state": self.state.value,
+            "volume": self.volume,
+            "frame": self.frame,
+            "length": len(self._data),
         }
