@@ -1,0 +1,9 @@
+{
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.linting.enabled": true,
+    "files.eol": "\n",
+    "python.linting.flake8Enabled": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "python.formatting.provider": "black"
+}
