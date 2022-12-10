@@ -1,5 +1,8 @@
 # 🔁 Looper
 
+[![Lint](https://github.com/jw3il/looper/actions/workflows/lint.yml/badge.svg)](https://github.com/jw3il/looper/actions/workflows/lint.yml) 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 *Looper* is a web-based audio recording and playback tool tailored for looping.
 Its main purpose is to add looping functionality to guitar amps with USB audio interfaces.
 
@@ -98,3 +101,6 @@ Note that this webserver is quite slow, only use this option for development.
 
 You found a bug or have an idea?
 Contributions are welcome, just open a new issue or create a pull request.
+
+The project uses [black](https://github.com/psf/black) for formatting and [flake8](https://github.com/PyCQA/flake8) for linting.
+You can install corresponding pre-commit hooks via `pre-commit install`.
