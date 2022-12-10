@@ -15,6 +15,8 @@ jobs:
           python-version: "3.10"
       - name: Install requirements
         run: pip install -r requirements.txt
+      - name: Install flake8-black to include black formatting checks
+        run: pip install flake8-black
       - name: Run flake8
         uses: suo/flake8-github-action@releases/v1
         with:
