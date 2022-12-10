@@ -20,11 +20,11 @@ Compared to microphone-based solutions, all recordings come straight from your a
 - [x] Simultaneous playback of multiple recordings
 - [x] Record during playback
 - [x] Download recordings
+- [x] Consistent over multiple devices
+- [x] Minimalistic UI
 - [ ] Control volume per recording
 - [ ] Fast loop transition to avoid audio popping
-- [ ] Consistent over multiple devices
 - [ ] Trim recordings
-- [ ] Minimalistic UI
 
 ## Supported Devices
 
@@ -89,8 +89,11 @@ Looper comes with tiny helper scripts to run it in different modes
 
 ### Production Mode
 
-Execute `looper.sh -p` to run the app in production mode with [gevent](http://www.gevent.org/).
+Execute `looper.sh -p` to run the app in production mode with [waitress](https://docs.pylonsproject.org/projects/waitress/en/stable/index.html).
 We recommend to use this mode for playing with looper, as the UI latency will usually be much lower than in development mode. 
+
+If you want to use looper on multiple devices simultaneously, you can enable the experimental websocket support with [gevent](http://www.gevent.org/) by running `looper.sh -pw`.
+Note that, depending on your hardware, this can increase the latency.
 
 ###  Development Mode
 
