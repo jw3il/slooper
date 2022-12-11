@@ -1,7 +1,11 @@
 import atexit
 import logging
+import os
+from pathlib import Path
+import shutil
 from threading import Lock
 import collections
+import traceback
 from typing import Optional, Tuple, Union
 import numpy as np
 import sounddevice as sd
@@ -12,6 +16,8 @@ from slooper.core.recording import Recording, State
 
 from slooper.core.valuestats import ValueStats
 from timeit import default_timer as timer
+from importlib.resources import files
+import slooper.core
 
 
 if __debug__:
@@ -146,9 +152,25 @@ def get_stream_info_dict():
     return info
 
 
+def get_config_path():
+    return Path(os.getenv("SLOOPER_CONF", default=os.path.expanduser("~/.slooper")))
+
+
 def load_config():
-    with open("config.yml", "r") as f:
-        return yaml.load(f, Loader=yaml.Loader)
+    config_path = get_config_path()
+    try:
+        with open(config_path, "r") as f:
+            logging.warning(f"Loading configuration from {config_path}")
+            return yaml.load(f, Loader=yaml.Loader)
+    except FileNotFoundError:
+        default_config_path = files(slooper.core).joinpath(".slooper.default")
+        shutil.copyfile(default_config_path, config_path)
+        logging.warning(f"Created default configuration at {config_path}")
+        with open(config_path, "r") as f:
+            return yaml.load(f, Loader=yaml.Loader)
+    except Exception as e:
+        logging.error(f"Could not read configuration at {config_path}")
+        traceback.print_exception(type(e), e, e.__traceback__)
 
 
 # make sure to properly close stream at exit
