@@ -126,7 +126,7 @@ else
    if [ "${WEBSOCKETS}" = true ]; then
       python -O -m slooper.app --host=$HOST --port=$PORT $WEBSOCKETS_ARG
    else
-      python -O -c "from waitress.runner import run; run()" --listen $HOST:$PORT slooper.app:__main__
+      python -O -c "from waitress.runner import run; run()" --listen $HOST:$PORT slooper.app.__main__:app
    fi
 fi
 
