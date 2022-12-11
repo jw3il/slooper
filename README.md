@@ -54,13 +54,18 @@ Next, clone the repository and set it as your working directory.
 (slooper) $ cd slooper
 ```
 
-All dependencies can then be installed with `pip`:
+You can install the project in editable mode with `pip`:
 
 ```
-(slooper) $ pip install -r requirements.txt
+(slooper) $ pip install -e .
 ```
 
-These python packages have additional requirements that may or may not be installed on your system. 
+This will set up the project. In your python environment, you should now be able to run slooper in debug mode:
+```
+(slooper) $ slooper -d
+```
+
+The dependencies have additional runtime requirements that may or may not be installed on your system. 
 On a fresh installation of `Raspbian GNU/Linux 11 (bullseye)`, you have to install `libatlas-base-dev` for `numpy` and `libportaudio2` and `libsndfile1-dev` for `sounddevice`:
 
 ```
@@ -69,7 +74,29 @@ $ sudo apt install libatlas-base-dev libportaudio2 libsndfile1-dev
 
 Congratulations, you are done!
 
-## System Configuration
+## Running Slooper
+
+Slooper comes with the helper script `slooper` to run it in different modes.
+
+### Production Mode
+
+Execute `slooper -p` to run the app in production mode with [waitress](https://docs.pylonsproject.org/projects/waitress/en/stable/index.html).
+We recommend to use this mode for playing with slooper, as the UI latency will usually be much lower than in development mode. 
+
+If you want to use slooper on multiple devices simultaneously, you can enable the experimental websocket support with [gevent](http://www.gevent.org/) by running `slooper -pw`.
+Note that, depending on your hardware, this can increase the latency.
+
+###  Development Mode
+
+Execute `slooper -d` to run the app in development mode with the built-in flask development server.
+Note that this webserver is quite slow, only use this option for development.
+
+###  Systemd Service
+
+Execute `slooper -i` to create and enable the slooper service to run slooper at system startup.
+You can find more service-related arguments with `slooper --help`.
+
+## Additional System Configuration
 
 ### Poweroff and usbreset (Linux only)
 
@@ -84,27 +111,22 @@ To make this work, you can edit `/etc/sudoers` with `visudo` and allow your user
 user_name ALL=(ALL) NOPASSWD: /sbin/poweroff, /usr/bin/usbreset
 ```
 
-## Running Slooper
-
-Slooper comes with tiny helper scripts to run it in different modes
-
-### Production Mode
-
-Execute `slooper.sh -p` to run the app in production mode with [waitress](https://docs.pylonsproject.org/projects/waitress/en/stable/index.html).
-We recommend to use this mode for playing with slooper, as the UI latency will usually be much lower than in development mode. 
-
-If you want to use slooper on multiple devices simultaneously, you can enable the experimental websocket support with [gevent](http://www.gevent.org/) by running `looper.sh -pw`.
-Note that, depending on your hardware, this can increase the latency.
-
-###  Development Mode
-
-Execute `slooper.sh -d` to run the app in development mode with the built-in flask development server.
-Note that this webserver is quite slow, only use this option for development.
-
 ## Contributing
 
 You found a bug or have an idea?
 Contributions are welcome, just open a new issue or create a pull request.
 
-The project uses [black](https://github.com/psf/black) for formatting and [flake8](https://github.com/PyCQA/flake8) for linting.
-You can install corresponding pre-commit hooks via `pre-commit install`.
+All development requirements can be installed with:
+
+```
+(slooper) $ pip install -r requirements.txt
+```
+
+The project uses [black](https://github.com/psf/black) and [prettier](https://github.com/prettier/prettier) for formatting and [flake8](https://github.com/PyCQA/flake8) for linting.
+You can install corresponding pre-commit hooks via:
+
+```
+(slooper) $ pre-commit install
+```
+
+We provide default project settings and recommended extensions for vscode.
