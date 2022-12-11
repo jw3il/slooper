@@ -1,7 +1,16 @@
 sounddevice
 soundfile
 numpy
-flask
-waitress
 PyYAML
 viztracer
+flask
+flask-socketio
+gevent
+gevent-websocket
+waitress
+# black and flake8 version should be consistent with
+# versions in .pre-commit-config.yaml
+pre-commit
+black==22.12.0
+flake8==6.0.0
+flake8-black
