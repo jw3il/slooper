@@ -8,12 +8,10 @@ import sounddevice as sd
 
 from viztracer import VizTracer, get_tracer
 import yaml
-from soundlooper.recording import Recording
+from slooper.core.recording import Recording, State
 
-from soundlooper.valuestats import ValueStats
+from slooper.core.valuestats import ValueStats
 from timeit import default_timer as timer
-
-from soundlooper.recording import State
 
 
 if __debug__:

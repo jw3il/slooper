@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Looper</title>
+        <title>Slooper</title>
         <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" />
         <meta
             name="viewport"
@@ -40,11 +40,18 @@
             <div class="row">
                 <nav class="navbar navbar-dark bg-dark">
                     <div class="container-fluid">
-                        <span class="navbar-brand mb-0 h1"
-                            ><img
-                                src="{{ url_for('static', filename='favicon.svg') }}"
-                            />Looper</span
-                        >
+                        <span class="navbar-brand mb-0 h1">
+                            <a class="navbar-brand" href="#">
+                                <img
+                                    src="{{ url_for('static', filename='favicon.svg') }}"
+                                    width="25"
+                                    height="25"
+                                    class="d-inline-block align-top"
+                                    alt=""
+                                />
+                                Slooper
+                            </a>
+                        </span>
                         <span id="stream" class="navbar-text"></span>
                         <span>
                             <button

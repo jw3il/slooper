@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/.env"
 set +a
 
 USAGE="\
-Looper: Web-based looping interface
+Slooper: Web-based sound looping interface
 Usage: $(basename $0) (-p|-d) [-w|-h|-i|-a|-l|-z|-u]
 
 General Options:
@@ -56,7 +56,7 @@ fi
 
 SERVICE="\
 [Unit]
-Description=Looper Web Server Service
+Description=Slooper Web Server Service
 
 [Install]
 WantedBy=multi-user.target
@@ -84,22 +84,22 @@ while getopts ":hpdwialzu" option; do
          # do nothing
          ;;
       i)
-         echo "Creating looper service.."
+         echo "Creating slooper service.."
          mkdir -p "${SCRIPT_DIR}/service"
-         echo "${SERVICE}" > "${SCRIPT_DIR}/service/looper.service"
-         (set -x; sudo systemctl enable "${SCRIPT_DIR}/service/looper.service")
+         echo "${SERVICE}" > "${SCRIPT_DIR}/service/slooper.service"
+         (set -x; sudo systemctl enable "${SCRIPT_DIR}/service/slooper.service")
          exit 0;;
       a)
-         (set -x; sudo systemctl start looper.service)
+         (set -x; sudo systemctl start slooper.service)
          exit 0;;
       l)
-         (set -x; journalctl -f -u looper)
+         (set -x; journalctl -f -u slooper)
          exit 0;;
       z)
-         (set -x; sudo systemctl stop looper.service)
+         (set -x; sudo systemctl stop slooper.service)
          exit 0;;
       u)
-         (set -x; sudo systemctl disable looper.service)
+         (set -x; sudo systemctl disable slooper.service)
          exit 0;;
       \?) # invalid option
          echo "Error: Invalid option"
@@ -121,12 +121,12 @@ cd "${SCRIPT_DIR}"
 
 # set server env variables and run server
 if [ "${DEVELOPMENT}" = true ]; then
-   python app.py --host=$HOST --port=$PORT --debug $WEBSOCKETS_ARG
+   python -m slooper.app --host=$HOST --port=$PORT --debug $WEBSOCKETS_ARG
 else
    if [ "${WEBSOCKETS}" = true ]; then
-      python -O app.py --host=$HOST --port=$PORT $WEBSOCKETS_ARG
+      python -O -m slooper.app --host=$HOST --port=$PORT $WEBSOCKETS_ARG
    else
-      python -O -c "from waitress.runner import run; run()" --listen $HOST:$PORT app:app
+      python -O -c "from waitress.runner import run; run()" --listen $HOST:$PORT slooper.app.__main__:app
    fi
 fi
 

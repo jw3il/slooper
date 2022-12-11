@@ -8,8 +8,8 @@ from datetime import datetime
 
 from flask import Flask, send_file, abort, jsonify, render_template
 import os
-from soundlooper.recording import State
-import soundlooper.stream as stream
+from slooper.core.recording import State
+import slooper.core.stream as stream
 import string
 from sys import platform
 from threading import Lock

@@ -2,7 +2,7 @@
 Extends flask app with websockets to synchronize the state across clients.
 """
 
-import app_flask
+from slooper.app import app_flask
 import logging
 from flask import request
 from flask_socketio import SocketIO

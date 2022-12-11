@@ -22,13 +22,13 @@ logging.config.dictConfig(
 )
 
 # load main app
-import app_flask  # noqa: E402
+from slooper.app import app_flask  # noqa: E402
 
 app = app_flask.app
 app_flask.load()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Looper server")
+    parser = argparse.ArgumentParser(description="Slooper server")
     parser.add_argument(
         "--host", type=str, default="localhost", help="The host to listen on"
     )
@@ -42,12 +42,12 @@ if __name__ == "__main__":
     if args.websocket:
         # run with socketio
         logging.warning(
-            f"Launching looper with websocket support on http://{args.host}:{args.port}"
+            f"Launching slooper with websocket support on http://{args.host}:{args.port}"
         )
-        import app_socketio
+        from slooper.app import app_socketio
 
         app_socketio.socketio.run(app, host=args.host, port=args.port, debug=args.debug)
     else:
         # run app directly
-        logging.warning(f"Launching looper on http://{args.host}:{args.port}")
+        logging.warning(f"Launching slooper on http://{args.host}:{args.port}")
         app.run(host=args.host, port=args.port, debug=args.debug)

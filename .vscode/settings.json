@@ -22,4 +22,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "editor.formatOnSaveMode": "file",
+    "cSpell.words": [
+        "slooper"
+    ],
 }

@@ -4,3 +4,4 @@
 __pycache__
 result*.json
 service/
+*egg-info

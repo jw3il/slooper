@@ -1,14 +1,18 @@
 /*
+!/slooper
+!/slooper/*
+!/slooper/app
+!/slooper/app/*
 
-!/static
-/static/*
+!/slooper/app/static
+/slooper/app/static/*
 
-!/static/css
-/static/css/*
-!/static/css/style.css
+!/slooper/app/static/css
+/slooper/app/static/css/*
+!/slooper/app/static/css/style.css
 
-!/static/js
-/static/js/*
-!/static/js/script.js
+!/slooper/app/static/js
+/slooper/app/static/js/*
+!/slooper/app/static/js/script.js
 
-!/templates
+!/slooper/app/templates

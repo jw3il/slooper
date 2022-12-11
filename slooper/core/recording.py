@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 import soundfile as sf
-from soundlooper.vector import RingAccessVector, RingSegmentList
+from slooper.core.vector import RingAccessVector, RingSegmentList
 
 
 class State(Enum):
