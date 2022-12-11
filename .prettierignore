@@ -1,0 +1,14 @@
+/*
+
+!/static
+/static/*
+
+!/static/css
+/static/css/*
+!/static/css/style.css
+
+!/static/js
+/static/js/*
+!/static/js/script.js
+
+!/templates

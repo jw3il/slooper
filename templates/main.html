@@ -1,81 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <title>Looper</title>
+        <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
 
-<head>
-    <title>Looper</title>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/style.css') }}"
+        />
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <!-- dependencies -->
+        <script src="{{ url_for('static', filename='js/jquery-3.6.1.min.js') }}"></script>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/font-awesome.min.css') }}"
+        />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+        />
+        <script src="{{ url_for('static', filename='js/sweetalert2.min.js') }}"></script>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/sweetalert2.min.css') }}"
+        />
 
-    <!-- dependencies -->
-    <script src="{{ url_for('static', filename='js/jquery-3.6.1.min.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <script src="{{ url_for('static', filename='js/sweetalert2.min.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sweetalert2.min.css') }}">
+        {% if websocket %}
+        <!-- Websocket enabled -->
+        <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+        {% endif %}
+    </head>
 
-    {% if websocket %}
-    <!-- Websocket enabled -->
-    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
-    {% endif %}
-</head>
-
-<body>
-    <div class="container-fluid h-100 w-100 d-flex flex-column">
-        <div class="row">
-            <nav class="navbar navbar-dark bg-dark">
-                <div class="container-fluid">
-                    <span class="navbar-brand mb-0 h1">🔁 Looper</span>
-                    <span id="stream" class="navbar-text"></span>
-                    <span>
-                        <button type="button" onclick="poweroff()" class="btn btn-primary">
-                            <i class="fa fa-power-off" aria-hidden="true"></i>
-                        </button>
-                    </span>
-                </div>
-            </nav>
-        </div>
-        <div class="row" style="height:60%;">
-            <div class="table-wrapper">
-                <table id="recordings" class="table table-hover">
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th scope="col" style="text-align: center; width: fit-content;">#</th>
-                            <th scope="col" style="text-align: center; width: fit-content;"></th>
-                            <th scope="col" style="text-align: center; width: 100%;">Playblack</th>
-                            <th scope="col" style="text-align: center; width: 100%;">Duration</th>
-                            <th scope="col" style="text-align: center; width: fit-content;">Download</th>
-                            <th scope="col" style="text-align: center; width: fit-content;">Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+    <body>
+        <div class="container-fluid h-100 w-100 d-flex flex-column">
+            <div class="row">
+                <nav class="navbar navbar-dark bg-dark">
+                    <div class="container-fluid">
+                        <span class="navbar-brand mb-0 h1"
+                            ><img
+                                src="{{ url_for('static', filename='favicon.svg') }}"
+                            />Looper</span
+                        >
+                        <span id="stream" class="navbar-text"></span>
+                        <span>
+                            <button
+                                type="button"
+                                onclick="poweroff()"
+                                class="btn btn-primary"
+                            >
+                                <i class="fa fa-power-off" aria-hidden="true"></i>
+                            </button>
+                        </span>
+                    </div>
+                </nav>
             </div>
-        </div>
-        <div class="row">
-            <button type="button" class="btn btn-light w-100" onclick="pauseAll()">Pause all</button>
-            <hr>
-            <form class="w-100">
-                <div class="row">
-                    <!-- <div class="col">
+            <div class="row" style="height: 60%">
+                <div class="table-wrapper">
+                    <table id="recordings" class="table table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th
+                                    scope="col"
+                                    style="text-align: center; width: fit-content"
+                                >
+                                    #
+                                </th>
+                                <th
+                                    scope="col"
+                                    style="text-align: center; width: fit-content"
+                                ></th>
+                                <th scope="col" style="text-align: center; width: 100%">
+                                    Playblack
+                                </th>
+                                <th scope="col" style="text-align: center; width: 100%">
+                                    Duration
+                                </th>
+                                <th
+                                    scope="col"
+                                    style="text-align: center; width: fit-content"
+                                >
+                                    Download
+                                </th>
+                                <th
+                                    scope="col"
+                                    style="text-align: center; width: fit-content"
+                                >
+                                    Delete
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <button type="button" class="btn btn-light w-100" onclick="pauseAll()">
+                    Pause all
+                </button>
+                <hr />
+                <form class="w-100">
+                    <div class="row">
+                        <!-- <div class="col">
                         <input id="recordName" class="form-control" type="text" value="" placeholder="Name (optional)">
                     </div> -->
-                    <div class="col" style="margin-top: 5px;">
-                        <div class="form-check form-check-inline" style="text-align: center;">
-                            <label class="form-check-label" for="autoLoopCheckbox">Play after recording</label>
-                            <input class="form-check-input" type="checkbox" value="" id="autoLoopCheckbox"
-                                checked="true">
+                        <div class="col" style="margin-top: 5px">
+                            <div
+                                class="form-check form-check-inline"
+                                style="text-align: center"
+                            >
+                                <label class="form-check-label" for="autoLoopCheckbox"
+                                    >Play after recording</label
+                                >
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    value=""
+                                    id="autoLoopCheckbox"
+                                    checked="true"
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="row flex-grow-1 w-100" style="margin: 10px 0px 10px 0px">
+                <button
+                    type="button"
+                    id="record"
+                    class="btn btn-primary btn-lg w-100 h-100"
+                ></button>
+            </div>
         </div>
-        <div class="row flex-grow-1 w-100" style="margin: 10px 0px 10px 0px;">
-            <button type="button" id="record" class="btn btn-primary btn-lg w-100 h-100"></button>
-        </div>
-    </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    </body>
 </html>
