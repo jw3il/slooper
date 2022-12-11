@@ -4,9 +4,12 @@ REAL_PATH=$(realpath "$0")
 SCRIPT_DIR="$(dirname ${REAL_PATH})"
 
 # load environment variables
-set -a
-source ".env"
-set +a
+if [ -z "${HOST}" ]; then
+   HOST=0.0.0.0
+fi
+if [ -z "${PORT}" ]; then
+   PORT=8080
+fi
 
 USAGE="\
 Slooper: Web-based sound looping interface
@@ -62,7 +65,7 @@ Description=Slooper Web Server Service
 WantedBy=multi-user.target
 
 [Service]
-ExecStart=/bin/bash ${REAL_PATH} -p ${WEBSOCKETS_SERVICE_ARG}
+ExecStart=PORT=${PORT} HOST=${HOST} /bin/bash ${REAL_PATH} -p ${WEBSOCKETS_SERVICE_ARG}
 Type=simple
 User=${USER}
 Restart=on-failure"
