@@ -60,19 +60,21 @@ You can install the project in editable mode with `pip`:
 (slooper) $ pip install -e .
 ```
 
-This will set up the project. In your python environment, you should now be able to run slooper in debug mode:
-```
-(slooper) $ slooper -d
-```
-
-The dependencies have additional runtime requirements that may or may not be installed on your system. 
+This will set up the project. The dependencies have additional runtime requirements that may or may not be installed on your system. 
 On a fresh installation of `Raspbian GNU/Linux 11 (bullseye)`, you have to install `libatlas-base-dev` for `numpy` and `libportaudio2` and `libsndfile1-dev` for `sounddevice`:
 
 ```
 $ sudo apt install libatlas-base-dev libportaudio2 libsndfile1-dev
 ```
 
-Congratulations, you are done!
+In your python environment, you should now be able to run slooper in development mode:
+```
+(slooper) $ slooper -d
+```
+
+On the first launch, this will create a slooper configuration file at `~/.slooper`. You can specify a different location by setting the environment variable `$SLOOPER_CONF`. You can customize the config, e.g. to select your desired audio devices for recording and playback.
+
+Congratulations, you are ready to go!
 
 ## Running Slooper
 
@@ -103,7 +105,7 @@ You can find more service-related arguments with `slooper --help`.
 Slooper includes some system functionality that requires root permissions:
 
 * It has a button to power off your system. This button simply calls `sudo poweroff` on the server. 
-* It can reset usb devices before searching for them. This helps finding usb devices that require replugging to be detected. This requires you to install `usbutils` on the target machine, e.g. `sudo apt-get install usbutils `. Slooper then calls `sudo usbreset $ID` for all device ids provided in the `config.yml` file. You can view your device ids with `lsusb`, they consist of two 16-bit hex values and look like `abcd:abcd`.
+* It can reset usb devices before searching for them. This helps finding usb devices that require replugging to be detected. This requires you to install `usbutils` on the target machine, e.g. `sudo apt-get install usbutils `. Slooper then calls `sudo usbreset $ID` for all device ids provided in its config file. You can view your device ids with `lsusb`, they consist of two 16-bit hex values and look like `abcd:abcd`.
 
 To make this work, you can edit `/etc/sudoers` with `visudo` and allow your user `user_name` to execute the commands without user interaction.
 
