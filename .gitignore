@@ -1,6 +1,7 @@
 .idea
 .vscode/*
 !.vscode/settings.json
+!.vscode/extensions.json
 __pycache__
 result*.json
 service/
