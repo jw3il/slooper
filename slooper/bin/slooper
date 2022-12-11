@@ -65,7 +65,10 @@ Description=Slooper Web Server Service
 WantedBy=multi-user.target
 
 [Service]
-ExecStart=PORT=${PORT} HOST=${HOST} /bin/bash ${REAL_PATH} -p ${WEBSOCKETS_SERVICE_ARG}
+Environment=\"PORT=${PORT}\"
+Environment=\"HOST=${HOST}\"
+Environment=\"PATH=${PATH}\"
+ExecStart=/bin/bash ${REAL_PATH} -p ${WEBSOCKETS_SERVICE_ARG}
 Type=simple
 User=${USER}
 Restart=on-failure"
@@ -124,12 +127,12 @@ cd "${SCRIPT_DIR}"
 
 # set server env variables and run server
 if [ "${DEVELOPMENT}" = true ]; then
-   python -m slooper.app --host=$HOST --port=$PORT --debug $WEBSOCKETS_ARG
+   (set -x; python -m slooper.app --host=$HOST --port=$PORT --debug $WEBSOCKETS_ARG)
 else
    if [ "${WEBSOCKETS}" = true ]; then
-      python -O -m slooper.app --host=$HOST --port=$PORT $WEBSOCKETS_ARG
+      (set -x; python -O -m slooper.app --host=$HOST --port=$PORT $WEBSOCKETS_ARG)
    else
-      python -O -c "from waitress.runner import run; run()" --listen $HOST:$PORT slooper.app.__main__:app
+      (set -x; python -O -c "from waitress.runner import run; run()" --listen $HOST:$PORT slooper.app.__main__:app)
    fi
 fi
 
